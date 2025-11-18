@@ -1,21 +1,42 @@
 import React from "react";
 import {
   Navbar,
-  MobileNav,
+  Collapse,
   Typography,
   Button,
   IconButton,
+  Menu,
+  MenuHandler,
+  MenuList,
+  MenuItem,
 } from "@material-tailwind/react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
+import { useAuth } from "../context/AuthContext";
 export function Header() {
   const [openNav, setOpenNav] = React.useState(false);
+  const [imageError, setImageError] = React.useState(false);
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    // Reset image error when profile picture changes
+    setImageError(false);
+  }, [user?.profilePicture]);
+
+  // Helper to check if profile picture is valid
+  const hasValidProfilePicture = user?.profilePicture && typeof user.profilePicture === 'string' && user.profilePicture.trim() !== '' && !imageError;
 
   React.useEffect(() => {
     const handleResize = () => window.innerWidth >= 960 && setOpenNav(false);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const navList = (
     <ul className="mt-2 mb-4 flex flex-col gap-2 lg:mb-0 lg:mt-0 lg:flex-row lg:items-center lg:gap-6">
@@ -108,25 +129,84 @@ export function Header() {
   );
 
   return (
-    <Navbar className="  mx-auto max-w-screen-xl px-4 py-2 lg:px-8 lg:py-4">
+    <Navbar className="mx-auto max-w-screen-xl px-4 py-2 lg:px-8 lg:py-4">
       <div className="container mx-auto flex items-center justify-between text-blue-gray-900">
         <Typography
-          as="a"
-          href="#"
           className="mr-4 cursor-pointer py-1.5 font-medium">
           <NavLink to={"/"}>Material Tailwind</NavLink>
         </Typography>
         <div className="hidden lg:block">{navList}</div>
-        <div className="flex items-center gap-x-1">
-          <Button variant="text" size="sm" className="hidden lg:inline-block">
-            <span>Log In</span>
-          </Button>
-          <Button
-            variant="gradient"
-            size="sm"
-            className="hidden lg:inline-block">
-            <span>Sign in</span>
-          </Button>
+        <div className="flex items-center gap-x-2">
+          {isAuthenticated ? (
+            <>
+              <Menu>
+                <MenuHandler>
+                  <IconButton variant="text" className="rounded-full p-0">
+                    <div className="relative w-8 h-8 rounded-full border-2 border-gray-300 dark:border-gray-600 overflow-hidden bg-blue-500 flex items-center justify-center">
+                      {hasValidProfilePicture ? (
+                        <img
+                          src={user.profilePicture}
+                          alt={user?.fullName || 'User'}
+                          className="w-full h-full object-cover"
+                          onError={() => setImageError(true)}
+                        />
+                      ) : (
+                        <span className="text-white font-semibold text-sm">
+                          {(user?.fullName?.trim()?.charAt(0) || user?.username?.trim()?.charAt(0) || 'U').toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                  </IconButton>
+                </MenuHandler>
+                <MenuList>
+                  <MenuItem onClick={() => navigate('/profile')}>
+                    <div className="flex items-center gap-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2}
+                        stroke="currentColor"
+                        className="w-4 h-4">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+                        />
+                      </svg>
+                      Profile
+                    </div>
+                  </MenuItem>
+                  <MenuItem onClick={handleLogout}>
+                    <div className="flex items-center gap-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2}
+                        stroke="currentColor"
+                        className="w-4 h-4">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+                        />
+                      </svg>
+                      Log Out
+                    </div>
+                  </MenuItem>
+                </MenuList>
+              </Menu>
+            </>
+          ) : (
+            <Button
+              variant="text"
+              size="sm"
+              className="hidden lg:inline-block"
+              onClick={() => navigate('/login')}>
+              <span>Log In</span>
+            </Button>
+          )}
           <div variant="gradient" size="sm" className="hidden lg:inline-block">
             <ThemeToggle />
           </div>
@@ -167,22 +247,63 @@ export function Header() {
         </IconButton>
       </div>
 
-      <MobileNav open={openNav}>
+      <Collapse open={openNav}>
         <div className="container mx-auto">
           {navList}
-          <div className="flex items-center gap-x-1">
-            <Button fullWidth variant="text" size="sm" className="">
-              <span>Log In</span>
-            </Button>
+          <div className="flex flex-col gap-2">
+            {isAuthenticated ? (
+              <>
+                <Button
+                  fullWidth
+                  variant="text"
+                  size="sm"
+                  className="flex items-center justify-center gap-2"
+                  onClick={() => {
+                    navigate('/profile');
+                    setOpenNav(false);
+                  }}>
+                  <div className="relative w-6 h-6 rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden bg-blue-500 flex items-center justify-center">
+                    {hasValidProfilePicture ? (
+                      <img
+                        src={user.profilePicture}
+                        alt={user?.fullName || 'User'}
+                        className="w-full h-full object-cover"
+                        onError={() => setImageError(true)}
+                      />
+                    ) : (
+                      <span className="text-white font-semibold text-xs">
+                        {(user?.fullName?.trim()?.charAt(0) || user?.username?.trim()?.charAt(0) || 'U').toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <span>Profile</span>
+                </Button>
+                <Button
+                  fullWidth
+                  variant="text"
+                  size="sm"
+                  className=""
+                  onClick={handleLogout}>
+                  <span>Log Out</span>
+                </Button>
+              </>
+            ) : (
+              <Button
+                fullWidth
+                variant="text"
+                size="sm"
+                className=""
+                onClick={() => navigate('/login')}>
+                <span>Log In</span>
+              </Button>
+            )}
 
-            <ThemeToggle />
-
-            <Button fullWidth variant="gradient" size="sm" className="">
-              <span>Sign in</span>
-            </Button>
+            <div className="flex justify-center">
+              <ThemeToggle />
+            </div>
           </div>
         </div>
-      </MobileNav>
+      </Collapse>
     </Navbar>
   );
 }
