@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import ThemeToggle from "./ThemeToggle";
 import logo from "../../public/logo_img.png";
 
 export default function Sidebar({
@@ -161,10 +160,6 @@ export default function Sidebar({
                 </svg>
                 Profile
               </button>
-              <div className="flex items-center justify-between p-2">
-                <span className="text-sm text-gray-300">Theme</span>
-                <ThemeToggle />
-              </div>
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 p-2 rounded-lg text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors text-sm">
