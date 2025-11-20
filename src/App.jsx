@@ -6,6 +6,7 @@ import Eror from './pages/Eror-404/Eror'
 import Login from './pages/Login/Login'
 import Profile from './pages/Profile/Profile'
 import Company from './pages/Company/Company'
+import CompanyCategories from './pages/CompanyCategories/CompanyCategories'
 import Users from './pages/Users/Users'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -21,6 +22,7 @@ function App() {
               <Routes>
                 <Route path='/' element={<ProtectedRoute><Home /></ProtectedRoute>} />
                 <Route path='/company' element={<ProtectedRoute><Company /></ProtectedRoute>} />
+                <Route path='/company-categories' element={<ProtectedRoute><CompanyCategories /></ProtectedRoute>} />
                 <Route path='/users' element={<ProtectedRoute><Users /></ProtectedRoute>} />
                 <Route path='/profile' element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path='*' element={<Eror />} />

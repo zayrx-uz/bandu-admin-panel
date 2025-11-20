@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import ThemeToggle from "./ThemeToggle";
 import logo from "../../public/logo_img.png";
 
 export default function Sidebar({
@@ -35,20 +34,21 @@ export default function Sidebar({
   const menuItems = [
     { path: "/", label: "Home", icon: "🏠" },
     { path: "/company", label: "Company", icon: "🏢" },
+    { path: "/company-categories", label: "Company Categories", icon: "📁" },
     { path: "/users", label: "Users", icon: "👥" },
   ];
 
   return (
     <div
-      className={`fixed left-0 top-0 h-screen bg-gray-800 dark:bg-gray-900 text-white transition-all duration-300 ${
+      className={`fixed left-0 top-0 h-screen bg-white border-r border-gray-200 text-gray-950 transition-all duration-300 ${
         isOpen ? "w-64" : "w-20"
-      } flex flex-col z-50 overflow-hidden`}>
+      } flex flex-col z-50 overflow-hidden shadow-sm`}>
       {/* Logo/Brand */}
-      <div className={`p-4 border-b border-gray-700 flex items-center flex-shrink-0 ${isOpen ? 'justify-between' : 'justify-center'}`}>
+      <div className={`p-4 border-b border-gray-200 flex items-center flex-shrink-0 ${isOpen ? 'justify-between' : 'justify-center'}`}>
         {isOpen && (
           <Link
             to="/"
-            className="text-2xl font-medium leading-[1.3] transition-colors duration-300 text-white">
+            className="text-xl font-semibold leading-[1.3] transition-colors duration-300 text-gray-950 hover:text-gray-700">
             <img
               src={logo}
               alt="Bandu Logo"
@@ -58,7 +58,7 @@ export default function Sidebar({
         )}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+          className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-950">
           {isOpen ? (
             <svg
               className="w-5 h-5"
@@ -90,7 +90,7 @@ export default function Sidebar({
       </div>
 
       {/* Navigation Menu */}
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {menuItems.map((item) => (
           <NavLink
             key={item.path}
@@ -98,21 +98,21 @@ export default function Sidebar({
             className={({ isActive }) =>
               `flex items-center gap-3 p-3 rounded-lg transition-colors ${
                 isActive
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                  ? "bg-gray-950 text-white font-medium"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-950"
               }`
             }>
             <span className="text-xl">{item.icon}</span>
-            {isOpen && <span>{item.label}</span>}
+            {isOpen && <span className="text-sm">{item.label}</span>}
           </NavLink>
         ))}
       </nav>
 
       {/* User Profile Section */}
       {isAuthenticated && (
-        <div className="p-4 border-t border-gray-700 flex-shrink-0">
+        <div className="p-4 border-t border-gray-200 flex-shrink-0">
           <div className="flex items-center gap-3 mb-4">
-            <div className="relative w-10 h-10 rounded-full border-2 border-gray-600 overflow-hidden bg-blue-500 flex items-center justify-center flex-shrink-0">
+            <div className="relative w-10 h-10 rounded-full border-2 border-gray-200 overflow-hidden bg-gray-950 flex items-center justify-center flex-shrink-0">
               {hasValidProfilePicture ? (
                 <img
                   src={user.profilePicture}
@@ -132,10 +132,10 @@ export default function Sidebar({
             </div>
             {isOpen && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">
+                <p className="text-sm font-medium truncate text-gray-950">
                   {user?.fullName || user?.username || "User"}
                 </p>
-                <p className="text-xs text-gray-400 truncate">
+                <p className="text-xs text-gray-500 truncate">
                   {user?.role || ""}
                 </p>
               </div>
@@ -143,10 +143,10 @@ export default function Sidebar({
           </div>
 
           {isOpen && (
-            <div className="space-y-2">
+            <div className="space-y-1">
               <button
                 onClick={() => navigate("/profile")}
-                className="w-full flex items-center gap-3 p-2 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors text-sm">
+                className="w-full flex items-center gap-3 p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-950 transition-colors text-sm">
                 <svg
                   className="w-5 h-5"
                   fill="none"
@@ -161,13 +161,9 @@ export default function Sidebar({
                 </svg>
                 Profile
               </button>
-              <div className="flex items-center justify-between p-2">
-                <span className="text-sm text-gray-300">Theme</span>
-                <ThemeToggle />
-              </div>
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 p-2 rounded-lg text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors text-sm">
+                className="w-full flex items-center gap-3 p-2 rounded-lg text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-sm">
                 <svg
                   className="w-5 h-5"
                   fill="none"

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardBody, Typography, Button, Input, Dialog, DialogHeader, DialogBody, DialogFooter } from '@material-tailwind/react';
-import { getCompanies, getCompanyById, createCompany, updateCompany, deleteCompany } from '../../services/api';
+import { Card, CardBody, Typography, Button, Input, Dialog, DialogHeader, DialogBody, DialogFooter, Checkbox } from '@material-tailwind/react';
+import { getCompanies, getCompanyById, createCompany, updateCompany, deleteCompany, createCompanyWithFiles, updateCompanyWithFiles, addCompanyImage, updateCompanyImage, deleteCompanyImage } from '../../services/api';
+import { getCompanyCategories } from '../../services/api';
 import { API_BASE_URL } from '../../services/api';
 
 // Helper function to normalize logo URL to use api.bandu.uz
@@ -36,17 +37,50 @@ export default function Company() {
   const [deleteId, setDeleteId] = useState(null);
   const [expandedRows, setExpandedRows] = useState({});
   const [logoErrors, setLogoErrors] = useState({});
+  const [availableCategories, setAvailableCategories] = useState([]);
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
+  const [imagesToDelete, setImagesToDelete] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     email: '',
     phone: '',
-    address: '',
+    isOpen247: false,
+    location: {
+      address: '',
+      latitude: '',
+      longitude: '',
+    },
+    workingHours: {
+      monday: { open: '', close: '', closed: false },
+      tuesday: { open: '', close: '', closed: false },
+      wednesday: { open: '', close: '', closed: false },
+      thursday: { open: '', close: '', closed: false },
+      friday: { open: '', close: '', closed: false },
+      saturday: { open: '', close: '', closed: false },
+      sunday: { open: '', close: '', closed: false },
+    },
+    categoryIds: [],
   });
 
   useEffect(() => {
     fetchCompanies();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await getCompanyCategories();
+      const categoriesList = response?.data?.data || response?.data || response || [];
+      setAvailableCategories(Array.isArray(categoriesList) ? categoriesList : []);
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+    }
+  };
 
   const fetchCompanies = async () => {
     try {
@@ -126,8 +160,26 @@ export default function Company() {
         description: company.description || '',
         email: company.email || '',
         phone: company.phone || '',
-        address: company.address || '',
+        isOpen247: company.isOpen247 || false,
+        location: {
+          address: company.location?.address || '',
+          latitude: company.location?.latitude?.toString() || '',
+          longitude: company.location?.longitude?.toString() || '',
+        },
+        workingHours: company.workingHours || {
+          monday: { open: '', close: '', closed: false },
+          tuesday: { open: '', close: '', closed: false },
+          wednesday: { open: '', close: '', closed: false },
+          thursday: { open: '', close: '', closed: false },
+          friday: { open: '', close: '', closed: false },
+          saturday: { open: '', close: '', closed: false },
+          sunday: { open: '', close: '', closed: false },
+        },
+        categoryIds: company.categories?.map(cat => cat.id) || [],
       });
+      // Set existing images
+      setExistingImages(company.images || []);
+      setLogoPreview(company.logo ? getLogoUrl(company.logo) : null);
     } else {
       setEditingCompany(null);
       setFormData({
@@ -135,9 +187,31 @@ export default function Company() {
         description: '',
         email: '',
         phone: '',
-        address: '',
+        isOpen247: false,
+        location: {
+          address: '',
+          latitude: '',
+          longitude: '',
+        },
+        workingHours: {
+          monday: { open: '', close: '', closed: false },
+          tuesday: { open: '', close: '', closed: false },
+          wednesday: { open: '', close: '', closed: false },
+          thursday: { open: '', close: '', closed: false },
+          friday: { open: '', close: '', closed: false },
+          saturday: { open: '', close: '', closed: false },
+          sunday: { open: '', close: '', closed: false },
+        },
+        categoryIds: [],
       });
+      setExistingImages([]);
+      setLogoPreview(null);
     }
+    // Reset file states
+    setLogoFile(null);
+    setImageFiles([]);
+    setImagePreviews([]);
+    setImagesToDelete([]);
     setOpenDialog(true);
   };
 
@@ -149,25 +223,245 @@ export default function Company() {
       description: '',
       email: '',
       phone: '',
-      address: '',
+      isOpen247: false,
+      location: {
+        address: '',
+        latitude: '',
+        longitude: '',
+      },
+      workingHours: {
+        monday: { open: '', close: '', closed: false },
+        tuesday: { open: '', close: '', closed: false },
+        wednesday: { open: '', close: '', closed: false },
+        thursday: { open: '', close: '', closed: false },
+        friday: { open: '', close: '', closed: false },
+        saturday: { open: '', close: '', closed: false },
+        sunday: { open: '', close: '', closed: false },
+      },
+      categoryIds: [],
     });
+    setLogoFile(null);
+    setLogoPreview(null);
+    setImageFiles([]);
+    setImagePreviews([]);
+    setExistingImages([]);
+    setImagesToDelete([]);
+  };
+
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImagesChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      setImageFiles(prev => [...prev, ...files]);
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreviews(prev => [...prev, reader.result]);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const removeImagePreview = (index) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingImage = (imageId) => {
+    setExistingImages(prev => prev.filter(img => img.id !== imageId));
+    setImagesToDelete(prev => [...prev, imageId]);
+  };
+
+  const setMainImage = (imageId) => {
+    setExistingImages(prev => prev.map(img => ({
+      ...img,
+      isMain: img.id === imageId
+    })));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       setError('');
+      
+      // Prepare company data matching API structure
+      const companyData = {
+        name: formData.name,
+        isOpen247: formData.isOpen247,
+        location: {
+          address: formData.location.address || '',
+          ...(formData.location.latitude && { latitude: parseFloat(formData.location.latitude) }),
+          ...(formData.location.longitude && { longitude: parseFloat(formData.location.longitude) }),
+        },
+        workingHours: formData.workingHours,
+        ...(formData.categoryIds.length > 0 && { categoryIds: formData.categoryIds }),
+        // Optional fields - only include if they have values
+        ...(formData.description && { description: formData.description }),
+        ...(formData.email && { email: formData.email }),
+        ...(formData.phone && { phone: formData.phone }),
+      };
+
+      let companyId;
+      
+      // Create or update company
       if (editingCompany) {
-        await updateCompany(editingCompany.id, formData);
+        // Update company
+        if (logoFile) {
+          // If logo is being updated, use FormData
+          const formDataToSend = new FormData();
+          formDataToSend.append('name', companyData.name);
+          formDataToSend.append('isOpen247', companyData.isOpen247);
+          formDataToSend.append('logo', logoFile);
+          
+          // Add location as JSON string
+          formDataToSend.append('location', JSON.stringify(companyData.location));
+          
+          // Add workingHours as JSON string
+          formDataToSend.append('workingHours', JSON.stringify(companyData.workingHours));
+          
+          // Add categoryIds as JSON array
+          if (companyData.categoryIds && companyData.categoryIds.length > 0) {
+            formDataToSend.append('categoryIds', JSON.stringify(companyData.categoryIds));
+          }
+          
+          // Add optional fields
+          if (companyData.description) formDataToSend.append('description', companyData.description);
+          if (companyData.email) formDataToSend.append('email', companyData.email);
+          if (companyData.phone) formDataToSend.append('phone', companyData.phone);
+          
+          await updateCompanyWithFiles(editingCompany.id, formDataToSend);
+        } else {
+          await updateCompany(editingCompany.id, companyData);
+        }
+        companyId = editingCompany.id;
       } else {
-        await createCompany(formData);
+        // Create company
+        if (logoFile) {
+          const formDataToSend = new FormData();
+          formDataToSend.append('name', companyData.name);
+          formDataToSend.append('isOpen247', companyData.isOpen247);
+          formDataToSend.append('logo', logoFile);
+          
+          // Add location as JSON string
+          formDataToSend.append('location', JSON.stringify(companyData.location));
+          
+          // Add workingHours as JSON string
+          formDataToSend.append('workingHours', JSON.stringify(companyData.workingHours));
+          
+          // Add categoryIds as JSON array
+          if (companyData.categoryIds && companyData.categoryIds.length > 0) {
+            formDataToSend.append('categoryIds', JSON.stringify(companyData.categoryIds));
+          }
+          
+          // Add optional fields
+          if (companyData.description) formDataToSend.append('description', companyData.description);
+          if (companyData.email) formDataToSend.append('email', companyData.email);
+          if (companyData.phone) formDataToSend.append('phone', companyData.phone);
+          
+          const result = await createCompanyWithFiles(formDataToSend);
+          // Handle different response structures
+          companyId = result?.data?.id || result?.data?.data?.id || result?.id;
+        } else {
+          const result = await createCompany(companyData);
+          // Handle different response structures
+          companyId = result?.data?.id || result?.data?.data?.id || result?.id;
+        }
       }
+
+      // Handle images separately using the image API endpoints
+      if (companyId) {
+        // Delete images that were marked for deletion
+        for (const imageId of imagesToDelete) {
+          try {
+            await deleteCompanyImage(companyId, imageId);
+          } catch (err) {
+            console.error(`Failed to delete image ${imageId}:`, err);
+          }
+        }
+
+        // Add new images
+        for (let i = 0; i < imageFiles.length; i++) {
+          try {
+            const isMain = i === 0 && existingImages.length === 0 && imagesToDelete.length === existingImages.length;
+            await addCompanyImage(companyId, imageFiles[i]);
+          } catch (err) {
+            console.error(`Failed to add image ${i}:`, err);
+          }
+        }
+
+        // Update main image if changed
+        // Check if main image was changed from original
+        if (editingCompany) {
+          const originalMainImage = editingCompany.images?.find(img => img.isMain);
+          const newMainImage = existingImages.find(img => img.isMain);
+          
+          // If main image changed or if there's a new main image
+          if (newMainImage && (!originalMainImage || originalMainImage.id !== newMainImage.id)) {
+            try {
+              await updateCompanyImage(companyId, newMainImage.id, null, true);
+            } catch (err) {
+              console.error('Failed to update main image:', err);
+            }
+          }
+        } else {
+          // For new companies, set first image as main if no main image exists
+          if (imageFiles.length > 0 && existingImages.length === 0) {
+            // The first image added will be set as main by default
+            // We'll need to update it after adding
+            try {
+              // Get the company again to get the image IDs
+              const updatedCompany = await getCompanyById(companyId);
+              const companyImages = updatedCompany?.data?.images || updatedCompany?.data?.data?.images || updatedCompany?.images || [];
+              if (companyImages.length > 0) {
+                await updateCompanyImage(companyId, companyImages[0].id, null, true);
+              }
+            } catch (err) {
+              console.error('Failed to set main image:', err);
+            }
+          }
+        }
+      }
+      
       handleCloseDialog();
       fetchCompanies();
-      setCurrentPage(1); // Reset to first page after adding/editing
+      setCurrentPage(1);
     } catch (err) {
       setError(err.message || 'Failed to save company');
     }
+  };
+
+  const handleWorkingHoursChange = (day, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      workingHours: {
+        ...prev.workingHours,
+        [day]: {
+          ...prev.workingHours[day],
+          [field]: value,
+        },
+      },
+    }));
+  };
+
+  const handleCategoryToggle = (categoryId) => {
+    setFormData(prev => ({
+      ...prev,
+      categoryIds: prev.categoryIds.includes(categoryId)
+        ? prev.categoryIds.filter(id => id !== categoryId)
+        : [...prev.categoryIds, categoryId],
+    }));
   };
 
   const handleDelete = async () => {
@@ -638,45 +932,289 @@ export default function Company() {
       </div>
 
       {/* Create/Edit Dialog */}
-      <Dialog open={openDialog} handler={handleCloseDialog} size="md">
+      <Dialog open={openDialog} handler={handleCloseDialog} size="xl" className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           {editingCompany ? 'Edit Company' : 'Create New Company'}
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <DialogBody className="space-y-4">
-            <Input
-              label="Company Name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-              className="dark:text-white"
-            />
-            <Input
-              label="Description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="dark:text-white"
-            />
-            <Input
-              type="email"
-              label="Email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="dark:text-white"
-            />
-            <Input
-              type="tel"
-              label="Phone"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="dark:text-white"
-            />
-            <Input
-              label="Address"
-              value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              className="dark:text-white"
-            />
+          <DialogBody className="space-y-6 max-h-[70vh] overflow-y-auto">
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-950 border-b border-gray-200 pb-2">Basic Information</h3>
+              <Input
+                label="Company Name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-950 focus:border-gray-950 bg-white text-gray-950 resize-none"
+                  rows={3}
+                  placeholder="Enter company description"
+                />
+              </div>
+              <Input
+                type="email"
+                label="Email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+              <Input
+                type="tel"
+                label="Phone"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="isOpen247"
+                  checked={formData.isOpen247}
+                  onChange={(e) => setFormData({ ...formData, isOpen247: e.target.checked })}
+                  className="w-4 h-4 text-gray-950 border-gray-300 rounded focus:ring-gray-950"
+                />
+                <label htmlFor="isOpen247" className="text-sm font-medium text-gray-700">
+                  Open 24/7
+                </label>
+              </div>
+            </div>
+
+            {/* Location */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-950 border-b border-gray-200 pb-2">Location</h3>
+              <Input
+                label="Address"
+                value={formData.location.address}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  location: { ...formData.location, address: e.target.value }
+                })}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  type="number"
+                  step="any"
+                  label="Latitude"
+                  value={formData.location.latitude}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    location: { ...formData.location, latitude: e.target.value }
+                  })}
+                  placeholder="e.g., 41.3111"
+                />
+                <Input
+                  type="number"
+                  step="any"
+                  label="Longitude"
+                  value={formData.location.longitude}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    location: { ...formData.location, longitude: e.target.value }
+                  })}
+                  placeholder="e.g., 69.2797"
+                />
+              </div>
+            </div>
+
+            {/* Working Hours */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-950 border-b border-gray-200 pb-2">Working Hours</h3>
+              <div className="space-y-3">
+                {Object.entries(formData.workingHours).map(([day, hours]) => (
+                  <div key={day} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2 w-24">
+                      <input
+                        type="checkbox"
+                        checked={hours.closed}
+                        onChange={(e) => handleWorkingHoursChange(day, 'closed', e.target.checked)}
+                        className="w-4 h-4 text-gray-950 border-gray-300 rounded focus:ring-gray-950"
+                      />
+                      <label className="text-sm font-medium text-gray-700 capitalize min-w-[60px]">
+                        {day}
+                      </label>
+                    </div>
+                    {!hours.closed && (
+                      <div className="flex items-center gap-2 flex-1">
+                        <Input
+                          type="time"
+                          label="Open"
+                          value={hours.open}
+                          onChange={(e) => handleWorkingHoursChange(day, 'open', e.target.value)}
+                          containerProps={{ className: 'min-w-0 flex-1' }}
+                        />
+                        <span className="text-gray-500 mt-6">-</span>
+                        <Input
+                          type="time"
+                          label="Close"
+                          value={hours.close}
+                          onChange={(e) => handleWorkingHoursChange(day, 'close', e.target.value)}
+                          containerProps={{ className: 'min-w-0 flex-1' }}
+                        />
+                      </div>
+                    )}
+                    {hours.closed && (
+                      <span className="text-sm text-gray-500">Closed</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Categories */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-950 border-b border-gray-200 pb-2">Categories</h3>
+              <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto p-2 border border-gray-200 rounded-lg">
+                {availableCategories.map((category) => (
+                  <div key={category.id} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id={`category-${category.id}`}
+                      checked={formData.categoryIds.includes(category.id)}
+                      onChange={() => handleCategoryToggle(category.id)}
+                      className="w-4 h-4 text-gray-950 border-gray-300 rounded focus:ring-gray-950"
+                    />
+                    <label 
+                      htmlFor={`category-${category.id}`} 
+                      className="text-sm text-gray-700 cursor-pointer flex-1"
+                    >
+                      {category.name}
+                    </label>
+                  </div>
+                ))}
+                {availableCategories.length === 0 && (
+                  <p className="text-sm text-gray-500 col-span-2">No categories available</p>
+                )}
+              </div>
+            </div>
+
+            {/* Logo */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-950 border-b border-gray-200 pb-2">Logo</h3>
+              <div className="space-y-3">
+                {(logoPreview || (editingCompany && editingCompany.logo && !logoFile)) && (
+                  <div className="relative inline-block">
+                    <img 
+                      src={logoPreview || getLogoUrl(editingCompany.logo)} 
+                      alt="Logo preview" 
+                      className="w-32 h-32 object-cover rounded-lg border border-gray-200"
+                    />
+                    {logoFile && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLogoFile(null);
+                          setLogoPreview(editingCompany?.logo ? getLogoUrl(editingCompany.logo) : null);
+                        }}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {logoPreview || (editingCompany && editingCompany.logo) ? 'Change Logo' : 'Upload Logo'}
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoChange}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-950 file:text-white hover:file:bg-gray-800"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Images */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-950 border-b border-gray-200 pb-2">Images</h3>
+              
+              {/* Existing Images */}
+              {existingImages.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-gray-700">Current Images</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {existingImages.map((image) => (
+                      <div key={image.id} className="relative group">
+                        <img 
+                          src={getLogoUrl(image.url)} 
+                          alt={`Image ${image.index}`}
+                          className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                        />
+                        {image.isMain && (
+                          <span className="absolute top-1 left-1 bg-gray-950 text-white text-xs px-2 py-1 rounded">
+                            Main
+                          </span>
+                        )}
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity rounded-lg flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                          {!image.isMain && (
+                            <button
+                              type="button"
+                              onClick={() => setMainImage(image.id)}
+                              className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+                            >
+                              Set Main
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeExistingImage(image.id)}
+                            className="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* New Image Previews */}
+              {imagePreviews.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-gray-700">New Images</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} className="relative">
+                        <img 
+                          src={preview} 
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImagePreview(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Upload New Images */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Add Images
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImagesChange}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-950 file:text-white hover:file:bg-gray-800"
+                />
+                <p className="mt-1 text-xs text-gray-500">You can select multiple images</p>
+              </div>
+            </div>
           </DialogBody>
           <DialogFooter>
             <Button

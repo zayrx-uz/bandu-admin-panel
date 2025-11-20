@@ -190,6 +190,155 @@ export const updateCompany = async (id, companyData) => {
   }
 };
 
+export const updateCompanyWithFiles = async (id, formData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const headers = {
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
+
+    const response = await fetch(`${API_BASE_URL}/company/${id}`, {
+      method: 'PATCH',
+      headers: headers,
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || data.error || 'Failed to update company');
+    }
+
+    return data;
+  } catch (error) {
+    if (error.message) {
+      throw error;
+    }
+    throw new Error('Network error. Please try again.');
+  }
+};
+
+export const createCompanyWithFiles = async (formData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const headers = {
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
+
+    const response = await fetch(`${API_BASE_URL}/company`, {
+      method: 'POST',
+      headers: headers,
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || data.error || 'Failed to create company');
+    }
+
+    return data;
+  } catch (error) {
+    if (error.message) {
+      throw error;
+    }
+    throw new Error('Network error. Please try again.');
+  }
+};
+
+// Company Image API functions
+export const addCompanyImage = async (companyId, imageFile) => {
+  try {
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('image', imageFile);
+
+    const response = await fetch(`${API_BASE_URL}/company/${companyId}/images`, {
+      method: 'POST',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || data.error || 'Failed to add image');
+    }
+
+    return data;
+  } catch (error) {
+    if (error.message) {
+      throw error;
+    }
+    throw new Error('Network error. Please try again.');
+  }
+};
+
+export const updateCompanyImage = async (companyId, imageId, imageFile, isMain = false) => {
+  try {
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+    if (isMain) {
+      formData.append('isMain', 'true');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/company/${companyId}/images/${imageId}`, {
+      method: 'PATCH',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || data.error || 'Failed to update image');
+    }
+
+    return data;
+  } catch (error) {
+    if (error.message) {
+      throw error;
+    }
+    throw new Error('Network error. Please try again.');
+  }
+};
+
+export const deleteCompanyImage = async (companyId, imageId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/company/${companyId}/images/${imageId}`, {
+      method: 'DELETE',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || data.error || 'Failed to delete image');
+    }
+
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return { success: true };
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    if (error.message) {
+      throw error;
+    }
+    throw new Error('Network error. Please try again.');
+  }
+};
+
 export const deleteCompany = async (id) => {
   try {
     const response = await fetch(`${API_BASE_URL}/company/${id}`, {
@@ -307,6 +456,146 @@ export const deactivateUser = async (id) => {
       throw new Error(data.message || data.error || 'Failed to deactivate user');
     }
 
+    return data;
+  } catch (error) {
+    if (error.message) {
+      throw error;
+    }
+    throw new Error('Network error. Please try again.');
+  }
+};
+
+// Company Categories API functions
+export const getCompanyCategories = async (params = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    
+    if (params.page !== undefined) queryParams.append('page', params.page);
+    if (params.limit !== undefined) queryParams.append('limit', params.limit);
+    if (params.search) queryParams.append('search', params.search);
+
+    const queryString = queryParams.toString();
+    const url = `${API_BASE_URL}/categories${queryString ? `?${queryString}` : ''}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || data.error || 'Failed to fetch company categories');
+    }
+
+    return data;
+  } catch (error) {
+    if (error.message) {
+      throw error;
+    }
+    throw new Error('Network error. Please try again.');
+  }
+};
+
+export const getCompanyCategoryById = async (id) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || data.error || 'Failed to fetch company category');
+    }
+
+    return data;
+  } catch (error) {
+    if (error.message) {
+      throw error;
+    }
+    throw new Error('Network error. Please try again.');
+  }
+};
+
+export const createCompanyCategory = async (categoryData) => {
+  try {
+    // API only requires 'name' field
+    const payload = {
+      name: categoryData.name
+    };
+
+    const response = await fetch(`${API_BASE_URL}/categories`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || data.error || 'Failed to create company category');
+    }
+
+    return data;
+  } catch (error) {
+    if (error.message) {
+      throw error;
+    }
+    throw new Error('Network error. Please try again.');
+  }
+};
+
+export const updateCompanyCategory = async (id, categoryData) => {
+  try {
+    // API accepts name and optionally description
+    const payload = {
+      name: categoryData.name
+    };
+    if (categoryData.description) {
+      payload.description = categoryData.description;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || data.error || 'Failed to update company category');
+    }
+
+    return data;
+  } catch (error) {
+    if (error.message) {
+      throw error;
+    }
+    throw new Error('Network error. Please try again.');
+  }
+};
+
+export const deleteCompanyCategory = async (id) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || data.error || 'Failed to delete company category');
+    }
+
+    // DELETE might not return data
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return { success: true };
+    }
+
+    const data = await response.json();
     return data;
   } catch (error) {
     if (error.message) {

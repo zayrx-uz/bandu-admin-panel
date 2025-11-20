@@ -11,7 +11,6 @@ import {
   MenuItem,
 } from "@material-tailwind/react";
 import { NavLink, useNavigate } from "react-router-dom";
-import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../context/AuthContext";
 export function Header() {
   const [openNav, setOpenNav] = React.useState(false);
@@ -207,9 +206,6 @@ export function Header() {
               <span>Log In</span>
             </Button>
           )}
-          <div variant="gradient" size="sm" className="hidden lg:inline-block">
-            <ThemeToggle />
-          </div>
         </div>
         <IconButton
           variant="text"
@@ -298,9 +294,6 @@ export function Header() {
               </Button>
             )}
 
-            <div className="flex justify-center">
-              <ThemeToggle />
-            </div>
           </div>
         </div>
       </Collapse>
