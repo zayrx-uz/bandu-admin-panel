@@ -14,7 +14,7 @@ const CompanyCard = ({ company, onOpenDetails, onEdit, onDelete }) => {
         {company.logo && !logoError ? (
           <div className="mb-4">
             <img 
-              src={`${API_BASE_URL}/company.logo`} 
+              src={`${API_BASE_URL}/${company.logo}`} 
               alt={company.name || 'Company logo'} 
               className="w-full h-48 object-cover rounded-lg"
               onError={() => setLogoError(true)}
