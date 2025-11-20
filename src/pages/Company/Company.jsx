@@ -448,6 +448,14 @@ export default function Company() {
                                       <span className="text-stone-600">Categories:</span>
                                       <span className="font-medium text-stone-900">{company.categories?.length || 0}</span>
                                     </div>
+                                    <div className="flex justify-between border-b border-stone-200 pb-2">
+                                      <span className="text-stone-600">Resources:</span>
+                                      <span className="font-medium text-stone-900">{company.resources?.length || 0}</span>
+                                    </div>
+                                    <div className="flex justify-between border-b border-stone-200 pb-2">
+                                      <span className="text-stone-600">Resource Categories:</span>
+                                      <span className="font-medium text-stone-900">{company.resourceCategories?.length || 0}</span>
+                                    </div>
                                     <div className="flex justify-between">
                                       <span className="text-stone-600">Images:</span>
                                       <span className="font-medium text-stone-900">{company.images?.length || 0}</span>
