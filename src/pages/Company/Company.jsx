@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardBody, Typography, Button, Input, Dialog, DialogHeader, DialogBody, DialogFooter } from '@material-tailwind/react';
 import { getCompanies, getCompanyById, createCompany, updateCompany, deleteCompany } from '../../services/api';
+import { API_BASE_URL } from '../../services/api';
 
 // Company Card Component
 const CompanyCard = ({ company, onOpenDetails, onEdit, onDelete }) => {

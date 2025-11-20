@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://api.bandu.uz/api';
+export const API_BASE_URL = 'https://api.bandu.uz/api';
 
 // Helper function to get auth headers
 export const getAuthHeaders = () => {
