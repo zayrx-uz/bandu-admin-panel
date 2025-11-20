@@ -19,105 +19,6 @@ const getLogoUrl = (logo) => {
   return `${API_BASE_URL}/${cleanPath}`;
 };
 
-// Company Card Component
-const CompanyCard = ({ company, onOpenDetails, onEdit, onDelete }) => {
-  const [logoError, setLogoError] = useState(false);
-
-  return (
-    <Card className="hover:shadow-lg transition-shadow">
-      <CardBody>
-        {/* Logo */}
-        {company.logo && !logoError ? (
-          <div className="mb-4">
-            <img 
-              src={getLogoUrl(company.logo)} 
-              alt={company.name || 'Company logo'} 
-              className="w-full h-48 object-cover rounded-lg"
-              onError={() => setLogoError(true)}
-            />
-          </div>
-        ) : (
-          <div className="mb-4 text-center py-8 bg-gray-100 dark:bg-gray-800 rounded-lg">
-            <Typography variant="small" color="gray">
-              {company.logo ? 'Logo not available' : 'No logo exists'}
-            </Typography>
-          </div>
-        )}
-
-        {/* Company Name */}
-        <Typography variant="h5" color="blue-gray" className="mb-3">
-          {company.name || 'Unnamed Company'}
-        </Typography>
-
-        {/* Company Info */}
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center justify-between">
-            <Typography variant="small" color="gray" className="font-semibold">
-              ID:
-            </Typography>
-            <Typography variant="small" color="blue-gray">
-              {company.id}
-            </Typography>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <Typography variant="small" color="gray" className="font-semibold">
-              Categories:
-            </Typography>
-            <Typography variant="small" color="blue-gray">
-              {company.categories?.length || 0}
-            </Typography>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <Typography variant="small" color="gray" className="font-semibold">
-              Images:
-            </Typography>
-            <Typography variant="small" color="blue-gray">
-              {company.images?.length || 0}
-            </Typography>
-          </div>
-          
-          {company.location?.address && (
-            <div className="flex items-start gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-              <span className="text-sm text-gray-600 dark:text-gray-400 mt-1">📍</span>
-              <Typography variant="small" color="gray" className="flex-1">
-                {company.location.address}
-              </Typography>
-            </div>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <Button
-            size="sm"
-            color="blue"
-            onClick={() => onOpenDetails(company)}
-            className="flex-1">
-            Open
-          </Button>
-          <Button
-            size="sm"
-            variant="outlined"
-            color="blue"
-            onClick={() => onEdit(company)}
-            className="flex-1">
-            Edit
-          </Button>
-          <Button
-            size="sm"
-            variant="outlined"
-            color="red"
-            onClick={() => onDelete(company.id)}
-            className="flex-1">
-            Delete
-          </Button>
-        </div>
-      </CardBody>
-    </Card>
-  );
-};
 
 export default function Company() {
   const [companies, setCompanies] = useState([]);
@@ -133,6 +34,8 @@ export default function Company() {
   const [logoError, setLogoError] = useState(false);
   const [editingCompany, setEditingCompany] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+  const [expandedRows, setExpandedRows] = useState({});
+  const [logoErrors, setLogoErrors] = useState({});
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -291,6 +194,14 @@ export default function Company() {
     setOpenDeleteDialog(true);
   };
 
+  const toggleRowExpand = (id) => {
+    setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleLogoError = (companyId) => {
+    setLogoErrors((prev) => ({ ...prev, [companyId]: true }));
+  };
+
   // Pagination calculations
   const totalPages = Math.ceil(companies.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -302,51 +213,17 @@ export default function Company() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Loading skeleton component
-  const LoadingSkeleton = () => (
-    <Card className="animate-pulse">
-      <CardBody>
-        <div className="mb-4 h-48 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-3"></div>
-        <div className="space-y-2 mb-4">
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-        </div>
-        <div className="flex gap-2 pt-4">
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded flex-1"></div>
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded flex-1"></div>
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded flex-1"></div>
-        </div>
-      </CardBody>
-    </Card>
-  );
 
   if (loading) {
     return (
-      <div className="flex flex-col max-h-screen overflow-hidden">
-        <div className="flex-shrink-0 space-y-6 pb-">
-          <div className="flex justify-between items-center">
-            <Typography variant="h3" color="blue-gray">
-              Company
-            </Typography>
-            <div className="h-10 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-          </div>
-          
-          <div className="flex items-center justify-center py-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+        <div className="max-w-8xl mx-auto">
+          <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">Loading company...</p>
+              <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">Loading companies...</p>
               <p className="mt-2 text-sm text-gray-500 dark:text-gray-500">Please wait while we fetch the data</p>
             </div>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {[...Array(6)].map((_, index) => (
-              <LoadingSkeleton key={index} />
-            ))}
           </div>
         </div>
       </div>
@@ -354,146 +231,409 @@ export default function Company() {
   }
 
   return (
-    <div className="flex flex-col max-h-screen overflow-hidden">
-      <div className="flex-shrink-0 space-y-6 pb-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <Typography variant="h3" color="blue-gray">
-              Company
-            </Typography>
-            {companies.length > 0 && (
-              <Typography variant="small" color="gray" className="mt-1">
-                {companies.length} {companies.length === 1 ? 'company' : 'company'} found
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+      <div className="max-w-8xl mx-auto">
+        {/* Header Section */}
+        <div className="bg-white rounded-lg p-6 mb-8 shadow-sm">
+          <div className="flex items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-200">
+            <div>
+              <Typography variant="h3" color="blue-gray" className="text-2xl font-bold">
+                Companies
               </Typography>
-            )}
-          </div>
-          <Button onClick={() => handleOpenDialog()} color="blue">
-            + Add Company
-          </Button>
-        </div>
-
-        {processing && !loading && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 px-4 py-3 rounded flex items-center gap-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700 dark:border-blue-400"></div>
-            <span>Processing company data...</span>
-          </div>
-        )}
-
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded">
-            <div className="font-semibold mb-1">Error loading company</div>
-            <div className="text-sm">{error}</div>
-            <Button 
-              size="sm" 
-              color="red" 
-              variant="outlined" 
-              className="mt-2"
-              onClick={fetchCompanies}>
-              Retry
-            </Button>
-          </div>
-        )}
-      </div>
-
-      <div className="flex-1 overflow-y-auto">
-        {companies.length === 0 ? (
-        <Card>
-          <CardBody className="text-center py-12">
-            <Typography variant="h6" color="gray" className="mb-2">
-              No company found
-            </Typography>
-            <Typography variant="small" color="gray" className="mb-4">
-              Get started by creating your first company
-            </Typography>
-            <Button onClick={() => handleOpenDialog()} color="blue">
+              {companies.length > 0 && (
+                <Typography variant="small" color="gray" className="mt-1">
+                  {companies.length} {companies.length === 1 ? 'company' : 'companies'} found
+                </Typography>
+              )}
+            </div>
+            <Button onClick={() => handleOpenDialog()} color="blue" className="flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
               Add Company
             </Button>
-          </CardBody>
-        </Card>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {paginatedCompanies.map((company) => (
-              <CompanyCard
-                key={company.id}
-                company={company}
-                onOpenDetails={handleOpenDetails}
-                onEdit={handleOpenDialog}
-                onDelete={handleDeleteClick}
-              />
-            ))}
           </div>
 
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-8">
-              <Button
-                variant="outlined"
-                color="blue"
-                size="sm"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Previous
-              </Button>
-
-              <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                  // Show first page, last page, current page, and pages around current
-                  if (
-                    page === 1 ||
-                    page === totalPages ||
-                    (page >= currentPage - 1 && page <= currentPage + 1)
-                  ) {
-                    return (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "filled" : "outlined"}
-                        color="blue"
-                        size="sm"
-                        onClick={() => handlePageChange(page)}
-                        className="min-w-[40px]">
-                        {page}
-                      </Button>
-                    );
-                  } else if (page === currentPage - 2 || page === currentPage + 2) {
-                    return (
-                      <span key={page} className="px-2 text-gray-500">
-                        ...
-                      </span>
-                    );
-                  }
-                  return null;
-                })}
-              </div>
-
-              <Button
-                variant="outlined"
-                color="blue"
-                size="sm"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="flex items-center gap-1">
-                Next
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Button>
+          {processing && !loading && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 px-4 py-3 rounded flex items-center gap-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700 dark:border-blue-400"></div>
+              <span>Processing company data...</span>
             </div>
           )}
 
-          {/* Page Info */}
-          {companies.length > 0 && (
-            <div className="text-center mt-4 pb-4">
-              <Typography variant="small" color="gray">
-                Showing {startIndex + 1} to {Math.min(endIndex, companies.length)} of {companies.length} company
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded">
+              <div className="font-semibold mb-1">Error loading companies</div>
+              <div className="text-sm">{error}</div>
+              <Button 
+                size="sm" 
+                color="red" 
+                variant="outlined" 
+                className="mt-2"
+                onClick={fetchCompanies}>
+                Retry
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Table Section */}
+        {companies.length === 0 ? (
+          <Card>
+            <CardBody className="text-center py-12">
+              <Typography variant="h6" color="gray" className="mb-2">
+                No companies found
               </Typography>
+              <Typography variant="small" color="gray" className="mb-4">
+                Get started by creating your first company
+              </Typography>
+              <Button onClick={() => handleOpenDialog()} color="blue">
+                Add Company
+              </Button>
+            </CardBody>
+          </Card>
+        ) : (
+          <>
+            <div className="overflow-x-auto bg-white rounded-lg shadow-sm">
+              <table className="w-full">
+                <thead className="bg-transparent border-b border-stone-200 bg-gradient-to-br from-slate-50 to-slate-100">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-stone-700"></th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-stone-700">Logo</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-stone-700">Name</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-stone-700">Location</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-stone-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedCompanies.map((company) => (
+                    <React.Fragment key={company.id}>
+                      <tr className="border-b border-stone-200 hover:bg-stone-50 transition">
+                        <td className="px-6 py-4">
+                          <button 
+                            onClick={() => toggleRowExpand(company.id)} 
+                            className="text-stone-500 hover:text-stone-700"
+                          >
+                            {expandedRows[company.id] ? (
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                              </svg>
+                            ) : (
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                                />
+                              </svg>
+                            )}
+                          </button>
+                        </td>
+                        <td className="px-6 py-4">
+                          {company.logo && !logoErrors[company.id] ? (
+                            <img 
+                              src={getLogoUrl(company.logo)} 
+                              alt={company.name || 'Company logo'} 
+                              className="w-16 h-16 object-cover rounded-lg"
+                              onError={() => handleLogoError(company.id)}
+                            />
+                          ) : (
+                            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+                              <Typography variant="small" color="gray" className="text-xs">
+                                No logo
+                              </Typography>
+                            </div>
+                          )}
+                        </td>
+                          <td className="px-6 py-4">
+                            <Typography variant="small" color="blue-gray" className="font-medium">
+                              {company.name || 'Unnamed Company'}
+                            </Typography>
+                          </td>
+                          <td className="px-6 py-4">
+                            {company.location?.address ? (
+                              <div className="flex items-start gap-2">
+                                <span className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">📍</span>
+                                <Typography variant="small" color="gray" className="max-w-xs">
+                                  {company.location.address}
+                                </Typography>
+                              </div>
+                            ) : (
+                              <Typography variant="small" color="gray">
+                                N/A
+                              </Typography>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleOpenDetails(company)}
+                                className="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded transition"
+                                title="View Details"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                  />
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                  />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => handleOpenDialog(company)}
+                                className="text-stone-600 hover:text-stone-900 p-1 hover:bg-stone-100 rounded transition"
+                                title="Edit"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                  />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteClick(company.id)}
+                                className="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded transition"
+                                title="Delete"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                        {expandedRows[company.id] && (
+                          <tr className="bg-stone-50 border-b border-stone-200">
+                            <td colSpan="5" className="px-6 py-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* Left Column - Basic Information */}
+                                <div>
+                                  <h4 className="font-semibold text-stone-900 mb-4">Basic Information</h4>
+                                  <div className="space-y-3 text-sm">
+                                    <div className="flex justify-between border-b border-stone-200 pb-2">
+                                      <span className="text-stone-600">ID:</span>
+                                      <span className="font-medium text-stone-900">{company.id}</span>
+                                    </div>
+                                    <div className="flex justify-between border-b border-stone-200 pb-2">
+                                      <span className="text-stone-600">Name:</span>
+                                      <span className="font-medium text-stone-900">{company.name || 'N/A'}</span>
+                                    </div>
+                                    {company.description && (
+                                      <div className="flex justify-between border-b border-stone-200 pb-2">
+                                        <span className="text-stone-600">Description:</span>
+                                        <span className="font-medium text-stone-900 max-w-xs text-right">{company.description}</span>
+                                      </div>
+                                    )}
+                                    <div className="flex justify-between border-b border-stone-200 pb-2">
+                                      <span className="text-stone-600">Open 24/7:</span>
+                                      <span className="font-medium text-stone-900">{company.isOpen247 ? 'Yes' : 'No'}</span>
+                                    </div>
+                                    <div className="flex justify-between border-b border-stone-200 pb-2">
+                                      <span className="text-stone-600">Categories:</span>
+                                      <span className="font-medium text-stone-900">{company.categories?.length || 0}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-stone-600">Images:</span>
+                                      <span className="font-medium text-stone-900">{company.images?.length || 0}</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Right Column - Location & Additional Details */}
+                                <div>
+                                  <h4 className="font-semibold text-stone-900 mb-4">Location & Details</h4>
+                                  <div className="space-y-3 text-sm">
+                                    {company.location && (
+                                      <>
+                                        {company.location.address && (
+                                          <div className="flex justify-between border-b border-stone-200 pb-2">
+                                            <span className="text-stone-600">Address:</span>
+                                            <span className="font-medium text-stone-900 max-w-xs text-right">{company.location.address}</span>
+                                          </div>
+                                        )}
+                                        {company.location.latitude && (
+                                          <div className="flex justify-between border-b border-stone-200 pb-2">
+                                            <span className="text-stone-600">Latitude:</span>
+                                            <span className="font-medium text-stone-900">{company.location.latitude}</span>
+                                          </div>
+                                        )}
+                                        {company.location.longitude && (
+                                          <div className="flex justify-between border-b border-stone-200 pb-2">
+                                            <span className="text-stone-600">Longitude:</span>
+                                            <span className="font-medium text-stone-900">{company.location.longitude}</span>
+                                          </div>
+                                        )}
+                                      </>
+                                    )}
+                                    {company.email && (
+                                      <div className="flex justify-between border-b border-stone-200 pb-2">
+                                        <span className="text-stone-600">Email:</span>
+                                        <span className="font-medium text-stone-900">{company.email}</span>
+                                      </div>
+                                    )}
+                                    {company.phone && (
+                                      <div className="flex justify-between">
+                                        <span className="text-stone-600">Phone:</span>
+                                        <span className="font-medium text-stone-900">{company.phone}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Categories Section */}
+                              {company.categories && company.categories.length > 0 && (
+                                <div className="mt-6 pt-6 border-t border-stone-200">
+                                  <h4 className="font-semibold text-stone-900 mb-4">Categories ({company.categories.length})</h4>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {company.categories.map((category) => (
+                                      <div key={category.id} className="p-3 bg-white rounded-lg border border-stone-200">
+                                        <div className="flex justify-between">
+                                          <span className="text-xs text-stone-600">ID: {category.id}</span>
+                                          <span className="font-medium text-stone-900">{category.name}</span>
+                                        </div>
+                                        {category.description && (
+                                          <p className="text-xs text-stone-600 mt-1">{category.description}</p>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Working Hours Section */}
+                              {company.workingHours && (
+                                <div className="mt-6 pt-6 border-t border-stone-200">
+                                  <h4 className="font-semibold text-stone-900 mb-4">Working Hours</h4>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                    {Object.entries(company.workingHours).map(([day, hours]) => (
+                                      <div key={day} className="flex justify-between border-b border-stone-200 pb-2">
+                                        <span className="text-stone-600 capitalize">{day}:</span>
+                                        <span className="font-medium text-stone-900">
+                                          {hours.closed ? 'Closed' : `${hours.open || 'N/A'} - ${hours.close || 'N/A'}`}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Images Section */}
+                              {company.images && company.images.length > 0 && (
+                                <div className="mt-6 pt-6 border-t border-stone-200">
+                                  <h4 className="font-semibold text-stone-900 mb-4">Images ({company.images.length})</h4>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {company.images.map((image) => (
+                                      <div key={image.id} className="relative">
+                                        <img 
+                                          src={getLogoUrl(image.url)} 
+                                          alt={`Image ${image.index}`}
+                                          className="w-full h-32 object-cover rounded-lg"
+                                        />
+                                        {image.isMain && (
+                                          <span className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                                            Main
+                                          </span>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))}
+                </tbody>
+              </table>
             </div>
-          )}
-        </>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-8">
+                <Button
+                  variant="outlined"
+                  color="blue"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Previous
+                </Button>
+
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    if (
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "filled" : "outlined"}
+                          color="blue"
+                          size="sm"
+                          onClick={() => handlePageChange(page)}
+                          className="min-w-[40px]">
+                          {page}
+                        </Button>
+                      );
+                    } else if (page === currentPage - 2 || page === currentPage + 2) {
+                      return (
+                        <span key={page} className="px-2 text-gray-500">
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+
+                <Button
+                  variant="outlined"
+                  color="blue"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center gap-1">
+                  Next
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Button>
+              </div>
+            )}
+
+            {/* Page Info */}
+            {companies.length > 0 && (
+              <div className="text-center mt-4 pb-4">
+                <Typography variant="small" color="gray">
+                  Showing {startIndex + 1} to {Math.min(endIndex, companies.length)} of {companies.length} companies
+                </Typography>
+              </div>
+            )}
+          </>
         )}
       </div>
 
