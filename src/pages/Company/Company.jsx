@@ -13,7 +13,7 @@ const CompanyCard = ({ company, onOpenDetails, onEdit, onDelete }) => {
         {company.logo && !logoError ? (
           <div className="mb-4">
             <img 
-              src={company.logo} 
+              src={`${API_BASE_URL}/company.logo`} 
               alt={company.name || 'Company logo'} 
               className="w-full h-48 object-cover rounded-lg"
               onError={() => setLogoError(true)}
@@ -718,7 +718,7 @@ export default function Company() {
                     {selectedCompany.images.map((image) => (
                       <div key={image.id} className="relative">
                         <img 
-                          src={image.url} 
+                          src={`${API_BASE_URL}/${image.url}`} 
                           alt={`Image ${image.index}`}
                           className="w-full h-32 object-cover rounded-lg"
                         />
