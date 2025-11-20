@@ -15,7 +15,7 @@ const getLogoUrl = (logo) => {
   
   // If logo is a relative path, prepend API_BASE_URL
   // Remove leading slash if present to avoid double slashes
-  const cleanPath = logo.startsWith('/api') ? logo.substring(4) : logo;
+  const cleanPath = logo.startsWith('/api') ? logo.substring(5) : logo;
   return `${API_BASE_URL}/${cleanPath}`;
 };
 
