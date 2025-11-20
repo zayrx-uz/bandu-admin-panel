@@ -3,6 +3,22 @@ import { Card, CardBody, Typography, Button, Input, Dialog, DialogHeader, Dialog
 import { getCompanies, getCompanyById, createCompany, updateCompany, deleteCompany } from '../../services/api';
 import { API_BASE_URL } from '../../services/api';
 
+// Helper function to normalize logo URL to use api.bandu.uz
+const getLogoUrl = (logo) => {
+  if (!logo) return null;
+  
+  // If logo is already a full URL
+  if (logo.startsWith('http://') || logo.startsWith('https://')) {
+    // Replace admin.bandu.uz with api.bandu.uz
+    return logo.replace(/https?:\/\/admin\.bandu\.uz/g, 'https://api.bandu.uz');
+  }
+  
+  // If logo is a relative path, prepend API_BASE_URL
+  // Remove leading slash if present to avoid double slashes
+  const cleanPath = logo.startsWith('/') ? logo.substring(1) : logo;
+  return `${API_BASE_URL}/${cleanPath}`;
+};
+
 // Company Card Component
 const CompanyCard = ({ company, onOpenDetails, onEdit, onDelete }) => {
   const [logoError, setLogoError] = useState(false);
@@ -14,7 +30,7 @@ const CompanyCard = ({ company, onOpenDetails, onEdit, onDelete }) => {
         {company.logo && !logoError ? (
           <div className="mb-4">
             <img 
-              src={`${API_BASE_URL}/${company.logo}`} 
+              src={getLogoUrl(company.logo)} 
               alt={company.name || 'Company logo'} 
               className="w-full h-48 object-cover rounded-lg"
               onError={() => setLogoError(true)}
@@ -572,7 +588,7 @@ export default function Company() {
                 </Typography>
                 {selectedCompany.logo && !logoError ? (
                   <img 
-                    src={selectedCompany.logo} 
+                    src={getLogoUrl(selectedCompany.logo)} 
                     alt={selectedCompany.name || 'Company logo'} 
                     className="w-full max-w-md h-64 object-cover rounded-lg"
                     onError={() => setLogoError(true)}
@@ -719,7 +735,7 @@ export default function Company() {
                     {selectedCompany.images.map((image) => (
                       <div key={image.id} className="relative">
                         <img 
-                          src={`${API_BASE_URL}/${image.url}`} 
+                          src={getLogoUrl(image.url)} 
                           alt={`Image ${image.index}`}
                           className="w-full h-32 object-cover rounded-lg"
                         />
