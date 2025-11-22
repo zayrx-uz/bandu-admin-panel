@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { loginAPI } from '../services/api';
+import { adminLogin } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
 
   const login = async (username, password) => {
     try {
-      const response = await loginAPI(username, password);
+      const response = await adminLogin(username, password);
       
       if (response.token && response.user) {
         setToken(response.token);

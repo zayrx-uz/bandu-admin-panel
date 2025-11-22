@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 :root {
+<<<<<<< Updated upstream
     font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   }
   
@@ -10,4 +11,208 @@
     margin: 0;
     padding: 0;
   }
+=======
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  
+  /* Default theme colors */
+  --default-primary: #f6c401;
+  --default-primary-dark: #c39b00;
+  --default-primary-darker: #b69000;
+  --default-bg: #ffffff;
+  --default-sidebar-text: #000000;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+/* Dark Mode Styles */
+.dark {
+  color-scheme: dark;
+}
+
+.dark body {
+  @apply bg-gray-900 text-white;
+}
+
+.dark .bg-white {
+  @apply bg-gray-800;
+}
+
+.dark .bg-gray-50 {
+  @apply bg-gray-900;
+}
+
+.dark .text-gray-950,
+.dark .text-gray-900,
+.dark .text-gray-800 {
+  @apply text-white;
+}
+
+.dark .text-gray-700 {
+  @apply text-gray-200;
+}
+
+.dark .text-gray-600 {
+  @apply text-gray-300;
+}
+
+.dark .text-gray-500 {
+  @apply text-gray-400;
+}
+
+/* Material Tailwind Typography colors - make lighter in dark mode */
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6 {
+  color: white !important;
+}
+
+/* Override Material Tailwind blue-gray color in dark mode */
+.dark [class*="blue-gray"] {
+  color: white !important;
+}
+
+/* Override Material Tailwind gray color in dark mode - make lighter */
+.dark [class*="gray"][class*="color"],
+.dark .text-gray {
+  color: rgb(229, 231, 235) !important; /* gray-200 */
+}
+
+/* Make all Typography headings white in dark mode */
+.dark [class*="typography"],
+.dark p[class*="color-blue-gray"],
+.dark span[class*="color-blue-gray"],
+.dark div[class*="color-blue-gray"] {
+  color: white !important;
+}
+
+/* For variant headings */
+.dark [class*="variant-h1"],
+.dark [class*="variant-h2"],
+.dark [class*="variant-h3"],
+.dark [class*="variant-h4"],
+.dark [class*="variant-h5"],
+.dark [class*="variant-h6"] {
+  color: white !important;
+}
+
+.dark .border-gray-200 {
+  @apply border-gray-700;
+}
+
+.dark .border-gray-300 {
+  @apply border-gray-600;
+}
+
+.dark .hover\:bg-gray-100:hover {
+  @apply bg-gray-700;
+}
+
+.dark .hover\:bg-gray-50:hover {
+  @apply bg-gray-800;
+}
+
+/* Custom Mode Styles */
+.custom-theme {
+  color-scheme: light;
+}
+
+.custom-theme body {
+  background-color: var(--custom-bg, #ffffff);
+  color: var(--custom-text, #030712);
+}
+
+.custom-theme .bg-white {
+  background-color: var(--custom-card-bg, #ffffff);
+}
+
+.custom-theme .bg-gray-50 {
+  background-color: var(--custom-surface, #f9fafb);
+}
+
+.custom-theme .text-gray-950,
+.custom-theme .text-gray-900 {
+  color: var(--custom-text, #030712);
+}
+
+.custom-theme .text-gray-700 {
+  color: var(--custom-text-secondary, #374151);
+}
+
+.custom-theme .text-gray-600 {
+  color: var(--custom-text-muted, #4b5563);
+}
+
+.custom-theme .border-gray-200 {
+  border-color: var(--custom-border, #e5e7eb);
+}
+
+.custom-theme .border-gray-300 {
+  border-color: var(--custom-border-strong, #d1d5db);
+}
+
+.custom-theme .hover\:bg-gray-100:hover {
+  background-color: var(--custom-hover, #f3f4f6);
+}
+
+.custom-theme .hover\:bg-gray-50:hover {
+  background-color: var(--custom-hover-light, #f9fafb);
+}
+
+/* Compact Mode Styles */
+.compact-mode .px-6 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.compact-mode .py-4 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.compact-mode .py-8 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.compact-mode .py-3 {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+
+.compact-mode .gap-3 {
+  gap: 0.5rem;
+}
+
+.compact-mode .gap-4 {
+  gap: 0.75rem;
+}
+
+.compact-mode .space-y-6 > * + * {
+  margin-top: 1rem;
+}
+
+.compact-mode .space-y-4 > * + * {
+  margin-top: 0.75rem;
+}
+
+/* Animation for expanding table rows */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 1000px;
+  }
+}
+>>>>>>> Stashed changes
   

@@ -6,6 +6,16 @@ import Eror from './pages/Eror-404/Eror'
 import Login from './pages/Login/Login'
 import Profile from './pages/Profile/Profile'
 import Company from './pages/Company/Company'
+<<<<<<< Updated upstream
+=======
+import CompanyCategories from './pages/CompanyCategories/CompanyCategories'
+import Resource from './pages/Resource/Resource'
+import ResourceCategories from './pages/ResourceCategories/ResourceCategories'
+import Floor from './pages/Floor/Floor'
+import Place from './pages/Place/Place'
+import Coupon from './pages/Coupon/Coupon'
+import Settings from './pages/Settings/Settings'
+>>>>>>> Stashed changes
 import Users from './pages/Users/Users'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -21,8 +31,18 @@ function App() {
               <Routes>
                 <Route path='/' element={<ProtectedRoute><Home /></ProtectedRoute>} />
                 <Route path='/company' element={<ProtectedRoute><Company /></ProtectedRoute>} />
+<<<<<<< Updated upstream
+=======
+                <Route path='/company-categories' element={<ProtectedRoute><CompanyCategories /></ProtectedRoute>} />
+                <Route path='/resource' element={<ProtectedRoute><Resource /></ProtectedRoute>} />
+                <Route path='/resource-categories' element={<ProtectedRoute><ResourceCategories /></ProtectedRoute>} />
+                <Route path='/floor' element={<ProtectedRoute><Floor /></ProtectedRoute>} />
+                <Route path='/place' element={<ProtectedRoute><Place /></ProtectedRoute>} />
+                <Route path='/coupon' element={<ProtectedRoute><Coupon /></ProtectedRoute>} />
+>>>>>>> Stashed changes
                 <Route path='/users' element={<ProtectedRoute><Users /></ProtectedRoute>} />
                 <Route path='/profile' element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path='/settings' element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                 <Route path='*' element={<Eror />} />
               </Routes>
             </Loyaout>

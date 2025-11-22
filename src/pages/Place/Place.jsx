@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardBody, Typography, Button, Input, Dialog, DialogHeader, DialogBody, DialogFooter, IconButton, Select, Option } from '@material-tailwind/react';
-import { getUsers, getUserById, createUser, updateUser, deleteUser, activateUser, deactivateUser, blockUser, unblockUser } from '../../services/api';
+import { Card, CardBody, Typography, Button, Input, Dialog, DialogHeader, DialogBody, DialogFooter, IconButton, Checkbox, Select, Option } from '@material-tailwind/react';
+import { getPlaces, getPlaceById, createPlace, updatePlace, deletePlace, getPlacesByCompany, getPlacesByFloor } from '../../services/api';
+import { getCompanies } from '../../services/api';
+import { getFloors } from '../../services/api';
 import { useSettings } from '../../context/SettingsContext';
 
-export default function Users() {
+export default function Place() {
   const { settings } = useSettings();
-  const [users, setUsers] = useState([]);
+  const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -14,114 +16,145 @@ export default function Users() {
   const [openDialog, setOpenDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [editingUser, setEditingUser] = useState(null);
+  const [selectedPlace, setSelectedPlace] = useState(null);
+  const [editingPlace, setEditingPlace] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [expandedRows, setExpandedRows] = useState({});
-  const [showPassword, setShowPassword] = useState(false);
+  const [availableCompanies, setAvailableCompanies] = useState([]);
+  const [availableFloors, setAvailableFloors] = useState([]);
+  const [filterCompanyId, setFilterCompanyId] = useState('');
+  const [filterFloorId, setFilterFloorId] = useState('');
   const [formData, setFormData] = useState({
-    username: '',
-    fullName: '',
-    phoneNumber: '',
-    email: '',
-    password: '',
-    role: 'USER',
+    name: '',
+    floorId: '',
+    capacity: '',
+    isActive: true,
   });
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    fetchPlaces();
+    fetchCompanies();
+    fetchFloors();
+  }, [filterCompanyId, filterFloorId]);
 
-  const fetchUsers = async () => {
+  const fetchCompanies = async () => {
+    try {
+      const response = await getCompanies();
+      const companiesList = response?.data?.data || response?.data || response || [];
+      setAvailableCompanies(Array.isArray(companiesList) ? companiesList : []);
+    } catch (err) {
+      console.error('Error fetching companies:', err);
+    }
+  };
+
+  const fetchFloors = async () => {
+    try {
+      const response = await getFloors();
+      const floorsList = response?.data?.data || response?.data || response || [];
+      setAvailableFloors(Array.isArray(floorsList) ? floorsList : []);
+    } catch (err) {
+      console.error('Error fetching floors:', err);
+    }
+  };
+
+  const fetchPlaces = async () => {
     try {
       setLoading(true);
       setProcessing(true);
       setError('');
       
-      console.log('Fetching users...');
-      const response = await getUsers();
-      console.log('Response received:', response);
+      console.log('Fetching places...');
+      let response;
       
-      let usersList = [];
-      
-      if (Array.isArray(response)) {
-        usersList = response;
-      } else if (response.data) {
-        if (Array.isArray(response.data)) {
-          usersList = response.data;
-        } else if (response.data.data && Array.isArray(response.data.data)) {
-          usersList = response.data.data;
-        } else if (response.data.users && Array.isArray(response.data.users)) {
-          usersList = response.data.users;
-        } else if (response.data.items && Array.isArray(response.data.items)) {
-          usersList = response.data.items;
-        } else if (response.data.results && Array.isArray(response.data.results)) {
-          usersList = response.data.results;
-        }
-      } else if (response.users && Array.isArray(response.users)) {
-        usersList = response.users;
-      } else if (response.items && Array.isArray(response.items)) {
-        usersList = response.items;
-      } else if (response.results && Array.isArray(response.results)) {
-        usersList = response.results;
+      if (filterCompanyId) {
+        response = await getPlacesByCompany(filterCompanyId);
+      } else if (filterFloorId) {
+        response = await getPlacesByFloor(filterFloorId);
+      } else {
+        const params = {};
+        if (filterCompanyId) params.companyId = filterCompanyId;
+        if (filterFloorId) params.floorId = filterFloorId;
+        response = await getPlaces(params);
       }
       
-      console.log('Processed users:', usersList.length, 'users');
+      console.log('Response received:', response);
       
-      if (usersList.length > 50) {
+      let placesList = [];
+      
+      if (Array.isArray(response)) {
+        placesList = response;
+      } else if (response.data) {
+        if (Array.isArray(response.data)) {
+          placesList = response.data;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          placesList = response.data.data;
+        } else if (response.data.places && Array.isArray(response.data.places)) {
+          placesList = response.data.places;
+        } else if (response.data.items && Array.isArray(response.data.items)) {
+          placesList = response.data.items;
+        } else if (response.data.results && Array.isArray(response.data.results)) {
+          placesList = response.data.results;
+        }
+      } else if (response.places && Array.isArray(response.places)) {
+        placesList = response.places;
+      } else if (response.items && Array.isArray(response.items)) {
+        placesList = response.items;
+      } else if (response.results && Array.isArray(response.results)) {
+        placesList = response.results;
+      }
+      
+      console.log('Processed places:', placesList.length, 'places');
+      
+      if (placesList.length > 50) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
       
-      setUsers(usersList);
+      setPlaces(placesList);
       
-      if (usersList.length === 0) {
-        console.warn('No users found in response. Full response:', response);
-        setError('No users found.');
+      if (placesList.length === 0) {
+        console.warn('No places found in response. Full response:', response);
+        setError('No places found.');
       }
     } catch (err) {
-      console.error('Error fetching users:', err);
-      setError(err.message || 'Failed to load users. Please check the console for details.');
-      setUsers([]);
+      console.error('Error fetching places:', err);
+      setError(err.message || 'Failed to load places. Please check the console for details.');
+      setPlaces([]);
     } finally {
       setLoading(false);
       setProcessing(false);
     }
   };
 
-  const handleOpenDetails = async (user) => {
+  const handleOpenDetails = async (place) => {
     try {
       setError('');
-      const userDetails = await getUserById(user.id);
-      const userData = userDetails?.data?.data || userDetails?.data || userDetails || user;
-      setSelectedUser(userData);
+      const placeDetails = await getPlaceById(place.id);
+      const placeData = placeDetails?.data?.data || placeDetails?.data || placeDetails || place;
+      setSelectedPlace(placeData);
       setOpenDetailsDialog(true);
     } catch (err) {
-      setError(err.message || 'Failed to load user details');
-      setSelectedUser(user);
+      setError(err.message || 'Failed to load place details');
+      setSelectedPlace(place);
       setOpenDetailsDialog(true);
     }
   };
 
-  const handleOpenDialog = (user = null) => {
-    if (user) {
-      setEditingUser(user);
+  const handleOpenDialog = (place = null) => {
+    if (place) {
+      setEditingPlace(place);
       setFormData({
-        username: user.username || '',
-        fullName: user.fullName || '',
-        phoneNumber: user.phoneNumber || '',
-        email: user.email || '',
-        password: '', // Don't pre-fill password
-        role: user.role || 'USER',
+        name: place.name || '',
+        floorId: place.floorId?.toString() || place.floor?.id?.toString() || '',
+        capacity: place.capacity?.toString() || '',
+        isActive: place.isActive !== undefined ? place.isActive : true,
       });
     } else {
-      setEditingUser(null);
+      setEditingPlace(null);
       setFormData({
-        username: '',
-        fullName: '',
-        phoneNumber: '',
-        email: '',
-        password: '',
-        role: 'USER',
+        name: '',
+        floorId: '',
+        capacity: '',
+        isActive: true,
       });
     }
     setOpenDialog(true);
@@ -129,15 +162,12 @@ export default function Users() {
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
-    setEditingUser(null);
-    setShowPassword(false);
+    setEditingPlace(null);
     setFormData({
-      username: '',
-      fullName: '',
-      phoneNumber: '',
-      email: '',
-      password: '',
-      role: 'USER',
+      name: '',
+      floorId: '',
+      capacity: '',
+      isActive: true,
     });
   };
 
@@ -146,50 +176,41 @@ export default function Users() {
     try {
       setError('');
       
-      const userData = {
-        username: formData.username,
-        fullName: formData.fullName,
-        phoneNumber: formData.phoneNumber,
-        email: formData.email,
-        role: formData.role,
+      const placeData = {
+        name: formData.name,
+        floorId: parseInt(formData.floorId),
+        capacity: formData.capacity ? parseInt(formData.capacity) : 0,
+        isActive: formData.isActive || false,
       };
-      
-      // Only include password if it's provided (for create or update)
-      if (formData.password) {
-        userData.password = formData.password;
-      }
-      
-      if (editingUser) {
-        await updateUser(editingUser.id, userData);
+
+      if (editingPlace) {
+        await updatePlace(editingPlace.id, placeData);
       } else {
-        if (!formData.password) {
-          throw new Error('Password is required for new users');
-        }
-        await createUser(userData);
+        await createPlace(placeData);
       }
       
       handleCloseDialog();
-      fetchUsers();
+      fetchPlaces();
       setCurrentPage(1);
     } catch (err) {
-      setError(err.message || 'Failed to save user');
+      setError(err.message || 'Failed to save place');
     }
   };
 
   const handleDelete = async () => {
     try {
       setError('');
-      await deleteUser(deleteId);
-      const wasLastItemOnPage = paginatedUsers.length === 1;
+      await deletePlace(deleteId);
+      const wasLastItemOnPage = paginatedPlaces.length === 1;
       const wasNotFirstPage = currentPage > 1;
       setOpenDeleteDialog(false);
       setDeleteId(null);
-      await fetchUsers();
+      await fetchPlaces();
       if (wasLastItemOnPage && wasNotFirstPage) {
         setCurrentPage(currentPage - 1);
       }
     } catch (err) {
-      setError(err.message || 'Failed to delete user');
+      setError(err.message || 'Failed to delete place');
       setOpenDeleteDialog(false);
     }
   };
@@ -199,83 +220,19 @@ export default function Users() {
     setOpenDeleteDialog(true);
   };
 
-  const handleActivate = async (id) => {
-    try {
-      setError('');
-      await activateUser(id);
-      await fetchUsers();
-    } catch (err) {
-      setError(err.message || 'Failed to activate user');
-    }
-  };
-
-  const handleDeactivate = async (id) => {
-    try {
-      setError('');
-      await deactivateUser(id);
-      await fetchUsers();
-    } catch (err) {
-      setError(err.message || 'Failed to deactivate user');
-    }
-  };
-
-  const handleBlock = async (id) => {
-    try {
-      setError('');
-      await blockUser(id);
-      await fetchUsers();
-    } catch (err) {
-      setError(err.message || 'Failed to block user');
-    }
-  };
-
-  const handleUnblock = async (id) => {
-    try {
-      setError('');
-      await unblockUser(id);
-      await fetchUsers();
-    } catch (err) {
-      setError(err.message || 'Failed to unblock user');
-    }
-  };
-
   const toggleRowExpand = (id) => {
     setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   // Pagination calculations
-  const totalPages = Math.ceil(users.length / itemsPerPage);
+  const totalPages = Math.ceil(places.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedUsers = users.slice(startIndex, endIndex);
+  const paginatedPlaces = places.slice(startIndex, endIndex);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const getStatusBadge = (user) => {
-    if (user.isBlocked) {
-      return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Blocked</span>;
-    }
-    if (user.isActive === false) {
-      return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Inactive</span>;
-    }
-    return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>;
-  };
-
-  const getRoleBadge = (role) => {
-    const colors = {
-      SUPER_ADMIN: 'bg-purple-100 text-purple-800',
-      ADMIN: 'bg-blue-100 text-blue-800',
-      BUSINESS_OWNER: 'bg-yellow-100 text-yellow-800',
-      USER: 'bg-gray-100 text-gray-800',
-    };
-    return (
-      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${colors[role] || colors.USER}`}>
-        {role}
-      </span>
-    );
   };
 
   if (loading) {
@@ -285,7 +242,7 @@ export default function Users() {
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">Loading users...</p>
+              <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">Loading places...</p>
               <p className="mt-2 text-sm text-gray-500 dark:text-gray-500">Please wait while we fetch the data</p>
             </div>
           </div>
@@ -302,11 +259,11 @@ export default function Users() {
           <div className="flex items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-200">
             <div>
               <Typography variant="h3" color="blue-gray" className="text-2xl font-bold">
-                Users
+                Places
               </Typography>
-              {users.length > 0 && (
+              {places.length > 0 && (
                 <Typography variant="small" color="gray" className="mt-1">
-                  {users.length} {users.length === 1 ? 'user' : 'users'} found
+                  {places.length} {places.length === 1 ? 'place' : 'places'} found
                 </Typography>
               )}
             </div>
@@ -314,27 +271,78 @@ export default function Users() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Add User
+              Add Place
             </Button>
+          </div>
+
+          {/* Filter Section */}
+          <div className="mb-4">
+            <div className="flex items-center gap-4 flex-wrap">
+              <Select
+                label="Filter by Company"
+                value={filterCompanyId}
+                onChange={(val) => {
+                  setFilterCompanyId(val);
+                  setFilterFloorId(''); // Clear floor filter when company is selected
+                  setCurrentPage(1);
+                }}
+                className="max-w-xs">
+                <Option value="">All Companies</Option>
+                {availableCompanies.map((company) => (
+                  <Option key={company.id} value={company.id.toString()}>
+                    {company.name}
+                  </Option>
+                ))}
+              </Select>
+              <Select
+                label="Filter by Floor"
+                value={filterFloorId}
+                onChange={(val) => {
+                  setFilterFloorId(val);
+                  setFilterCompanyId(''); // Clear company filter when floor is selected
+                  setCurrentPage(1);
+                }}
+                className="max-w-xs">
+                <Option value="">All Floors</Option>
+                {availableFloors.map((floor) => (
+                  <Option key={floor.id} value={floor.id.toString()}>
+                    {floor.name}
+                  </Option>
+                ))}
+              </Select>
+              {(filterCompanyId || filterFloorId) && (
+                <Button
+                  variant="outlined"
+                  color="gray"
+                  size="sm"
+                  onClick={() => {
+                    setFilterCompanyId('');
+                    setFilterFloorId('');
+                    setCurrentPage(1);
+                  }}>
+                  Clear Filters
+                </Button>
+              )}
+            </div>
           </div>
 
           {processing && !loading && (
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 px-4 py-3 rounded flex items-center gap-2">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700 dark:border-blue-400"></div>
-              <span>Processing user data...</span>
+              <span>Processing place data...</span>
             </div>
           )}
 
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded">
-              <div className="font-semibold mb-1">Error loading users</div>
+              <div className="font-semibold mb-1">Error loading places</div>
               <div className="text-sm">{error}</div>
               <Button 
                 size="sm" 
                 color="red" 
                 variant="outlined" 
                 className="mt-2"
-                onClick={fetchUsers}>
+                onClick={fetchPlaces}>
                 Retry
               </Button>
             </div>
@@ -342,17 +350,17 @@ export default function Users() {
         </div>
 
         {/* Table Section */}
-        {users.length === 0 ? (
+        {places.length === 0 ? (
           <Card>
             <CardBody className="text-center py-12">
               <Typography variant="h6" color="gray" className="mb-2">
-                No users found
+                No places found
               </Typography>
               <Typography variant="small" color="gray" className="mb-4">
-                Get started by creating your first user
+                Get started by creating your first place
               </Typography>
               <Button onClick={() => handleOpenDialog()} color="blue">
-                Add User
+                Add Place
               </Button>
             </CardBody>
           </Card>
@@ -364,24 +372,24 @@ export default function Users() {
                   <tr>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-stone-700"></th>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-stone-700">ID</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-stone-700">Username</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-stone-700">Full Name</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-stone-700">Role</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-stone-700">Name</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-stone-700">Floor</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-stone-700">Capacity</th>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-stone-700">Status</th>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-stone-700">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedUsers.map((user) => (
-                    <React.Fragment key={user.id}>
+                  {paginatedPlaces.map((place) => (
+                    <React.Fragment key={place.id}>
                       <tr className="border-b border-stone-200 hover:bg-stone-50 transition">
                         <td className="px-6 py-4">
                           <IconButton
                             variant="text"
-                            onClick={() => toggleRowExpand(user.id)}
+                            onClick={() => toggleRowExpand(place.id)}
                             size="sm"
                             className="text-stone-500 hover:text-stone-700">
-                            {expandedRows[user.id] ? (
+                            {expandedRows[place.id] ? (
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                               </svg>
@@ -399,31 +407,39 @@ export default function Users() {
                         </td>
                         <td className="px-6 py-4">
                           <Typography variant="small" color="blue-gray" className="font-medium">
-                            {user.id}
+                            {place.id}
                           </Typography>
                         </td>
                         <td className="px-6 py-4">
                           <Typography variant="small" color="blue-gray" className="font-medium">
-                            {user.username || 'N/A'}
+                            {place.name || 'Unnamed Place'}
+                          </Typography>
+                        </td>
+                        <td className="px-6 py-4">
+                          <Typography variant="small" color="gray">
+                            {place.floor?.name || (place.floorId ? `Floor ID: ${place.floorId}` : 'N/A')}
                           </Typography>
                         </td>
                         <td className="px-6 py-4">
                           <Typography variant="small" color="blue-gray" className="font-medium">
-                            {user.fullName || 'N/A'}
+                            {place.capacity || 0}
                           </Typography>
                         </td>
                         <td className="px-6 py-4">
-                          {getRoleBadge(user.role)}
-                        </td>
-                        <td className="px-6 py-4">
-                          {getStatusBadge(user)}
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            place.isActive 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                              : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                          }`}>
+                            {place.isActive ? 'Active' : 'Inactive'}
+                          </span>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex gap-2">
                             <IconButton
                               variant="text"
                               color="blue"
-                              onClick={() => handleOpenDetails(user)}
+                              onClick={() => handleOpenDetails(place)}
                               size="sm"
                               title="View Details">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -444,7 +460,7 @@ export default function Users() {
                             <IconButton
                               variant="text"
                               color="gray"
-                              onClick={() => handleOpenDialog(user)}
+                              onClick={() => handleOpenDialog(place)}
                               size="sm"
                               title="Edit">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -456,56 +472,10 @@ export default function Users() {
                                 />
                               </svg>
                             </IconButton>
-                            {user.isBlocked ? (
-                              <IconButton
-                                variant="text"
-                                color="green"
-                                onClick={() => handleUnblock(user.id)}
-                                size="sm"
-                                title="Unblock">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                                </svg>
-                              </IconButton>
-                            ) : (
-                              <IconButton
-                                variant="text"
-                                color="orange"
-                                onClick={() => handleBlock(user.id)}
-                                size="sm"
-                                title="Block">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                </svg>
-                              </IconButton>
-                            )}
-                            {user.isActive === false ? (
-                              <IconButton
-                                variant="text"
-                                color="green"
-                                onClick={() => handleActivate(user.id)}
-                                size="sm"
-                                title="Activate">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                              </IconButton>
-                            ) : (
-                              <IconButton
-                                variant="text"
-                                color="yellow"
-                                onClick={() => handleDeactivate(user.id)}
-                                size="sm"
-                                title="Deactivate">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                              </IconButton>
-                            )}
                             <IconButton
                               variant="text"
                               color="red"
-                              onClick={() => handleDeleteClick(user.id)}
+                              onClick={() => handleDeleteClick(place.id)}
                               size="sm"
                               title="Delete">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -520,10 +490,16 @@ export default function Users() {
                           </div>
                         </td>
                       </tr>
-                      {expandedRows[user.id] && (
+                      {expandedRows[place.id] && (
                         <tr className="bg-stone-50 border-b border-stone-200">
                           <td colSpan="7" className="px-6 py-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div 
+                              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                              style={{
+                                animation: 'slideDown 0.3s ease-out',
+                              }}
+                            >
+                              {/* Left Column - Basic Information */}
                               <Card className="shadow-sm">
                                 <CardBody className="p-4">
                                   <Typography variant="h6" color="blue-gray" className="mb-4 font-semibold">
@@ -535,74 +511,89 @@ export default function Users() {
                                         ID:
                                       </Typography>
                                       <Typography variant="small" color="blue-gray" className="font-semibold">
-                                        {user.id}
+                                        {place.id}
                                       </Typography>
                                     </div>
                                     <div className="flex justify-between items-center border-b border-gray-200 pb-2">
                                       <Typography variant="small" color="gray" className="font-medium">
-                                        Username:
+                                        Name:
                                       </Typography>
                                       <Typography variant="small" color="blue-gray" className="font-semibold">
-                                        {user.username || 'N/A'}
+                                        {place.name || 'N/A'}
                                       </Typography>
                                     </div>
                                     <div className="flex justify-between items-center border-b border-gray-200 pb-2">
                                       <Typography variant="small" color="gray" className="font-medium">
-                                        Full Name:
+                                        Capacity:
                                       </Typography>
                                       <Typography variant="small" color="blue-gray" className="font-semibold">
-                                        {user.fullName || 'N/A'}
+                                        {place.capacity || 0}
                                       </Typography>
                                     </div>
                                     <div className="flex justify-between items-center">
                                       <Typography variant="small" color="gray" className="font-medium">
-                                        Role:
+                                        Status:
                                       </Typography>
-                                      {getRoleBadge(user.role)}
+                                      <Typography variant="small" color="blue-gray" className="font-semibold">
+                                        {place.isActive ? 'Active' : 'Inactive'}
+                                      </Typography>
                                     </div>
                                   </div>
                                 </CardBody>
                               </Card>
 
+                              {/* Right Column - Additional Details */}
                               <Card className="shadow-sm">
                                 <CardBody className="p-4">
                                   <Typography variant="h6" color="blue-gray" className="mb-4 font-semibold">
-                                    Contact & Status
+                                    Additional Details
                                   </Typography>
                                   <div className="space-y-3">
-                                    {user.phoneNumber && (
-                                      <div className="flex justify-between items-center border-b border-gray-200 pb-2">
-                                        <Typography variant="small" color="gray" className="font-medium">
-                                          Phone:
-                                        </Typography>
-                                        <Typography variant="small" color="blue-gray" className="font-semibold">
-                                          {user.phoneNumber}
-                                        </Typography>
-                                      </div>
-                                    )}
-                                    {user.email && (
-                                      <div className="flex justify-between items-center border-b border-gray-200 pb-2">
-                                        <Typography variant="small" color="gray" className="font-medium">
-                                          Email:
-                                        </Typography>
-                                        <Typography variant="small" color="blue-gray" className="font-semibold">
-                                          {user.email}
-                                        </Typography>
-                                      </div>
-                                    )}
                                     <div className="flex justify-between items-center border-b border-gray-200 pb-2">
                                       <Typography variant="small" color="gray" className="font-medium">
-                                        Status:
+                                        Floor:
                                       </Typography>
-                                      {getStatusBadge(user)}
+                                      <Typography variant="small" color="blue-gray" className="font-semibold">
+                                        {place.floor?.name || (place.floorId ? `ID: ${place.floorId}` : 'N/A')}
+                                      </Typography>
                                     </div>
-                                    {user.createdAt && (
-                                      <div className="flex justify-between items-center">
+                                    {place.company && (
+                                      <div className="flex justify-between items-center border-b border-gray-200 pb-2">
                                         <Typography variant="small" color="gray" className="font-medium">
-                                          Created:
+                                          Company:
                                         </Typography>
                                         <Typography variant="small" color="blue-gray" className="font-semibold">
-                                          {new Date(user.createdAt).toLocaleDateString()}
+                                          {place.company.name}
+                                        </Typography>
+                                      </div>
+                                    )}
+                                    {place.location && (
+                                      <div className="flex justify-between items-start border-b border-gray-200 pb-2">
+                                        <Typography variant="small" color="gray" className="font-medium">
+                                          Location:
+                                        </Typography>
+                                        <Typography variant="small" color="blue-gray" className="font-semibold max-w-xs text-right">
+                                          {place.location.address || JSON.stringify(place.location)}
+                                        </Typography>
+                                      </div>
+                                    )}
+                                    {place.createdAt && (
+                                      <div className="flex justify-between items-center border-b border-gray-200 pb-2">
+                                        <Typography variant="small" color="gray" className="font-medium">
+                                          Created At:
+                                        </Typography>
+                                        <Typography variant="small" color="blue-gray" className="font-semibold">
+                                          {new Date(place.createdAt).toLocaleDateString()}
+                                        </Typography>
+                                      </div>
+                                    )}
+                                    {place.updatedAt && (
+                                      <div className="flex justify-between items-center">
+                                        <Typography variant="small" color="gray" className="font-medium">
+                                          Updated At:
+                                        </Typography>
+                                        <Typography variant="small" color="blue-gray" className="font-semibold">
+                                          {new Date(place.updatedAt).toLocaleDateString()}
                                         </Typography>
                                       </div>
                                     )}
@@ -680,10 +671,10 @@ export default function Users() {
             )}
 
             {/* Page Info */}
-            {users.length > 0 && (
+            {places.length > 0 && (
               <div className="text-center mt-4 pb-4">
                 <Typography variant="small" color="gray">
-                  Showing {startIndex + 1} to {Math.min(endIndex, users.length)} of {users.length} users
+                  Showing {startIndex + 1} to {Math.min(endIndex, places.length)} of {places.length} places
                 </Typography>
               </div>
             )}
@@ -696,75 +687,61 @@ export default function Users() {
         open={openDialog} 
         handler={handleCloseDialog} 
         size="md"
+        className="max-h-[90vh]"
+        animate={{
+          mount: { scale: 1, y: 0 },
+          unmount: { scale: 0.9, y: -100 },
+        }}
       >
         <DialogHeader className="border-b border-gray-200 pb-4">
           <Typography variant="h4" color="blue-gray">
-            {editingUser ? 'Edit User' : 'Create New User'}
+            {editingPlace ? 'Edit Place' : 'Create New Place'}
           </Typography>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <DialogBody divider className="space-y-4">
-            <Input
-              label="Username"
-              value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-              required
-            />
-            <Input
-              label="Full Name"
-              value={formData.fullName}
-              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-            />
-            <Input
-              type="tel"
-              label="Phone Number"
-              value={formData.phoneNumber}
-              onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-            />
-            <Input
-              type="email"
-              label="Email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
-            <div className="relative">
+          <DialogBody divider className="space-y-6 max-h-[70vh] overflow-y-auto">
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded">
+                {error}
+              </div>
+            )}
+
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-950 border-b border-gray-200 pb-2">Basic Information</h3>
               <Input
-                type={showPassword ? "text" : "password"}
-                label={editingUser ? "New Password (leave empty to keep current)" : "Password"}
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                required={!editingUser}
-                className="pr-10"
+                label="Place Name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+                placeholder="e.g., Table 5"
               />
-              <IconButton
-                type="button"
-                variant="text"
-                size="sm"
-                className="!absolute right-1 top-1/2 -translate-y-1/2 rounded"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                )}
-              </IconButton>
+              <Select
+                label="Floor"
+                value={formData.floorId}
+                onChange={(val) => setFormData({ ...formData, floorId: val })}
+                required>
+                {availableFloors.map((floor) => (
+                  <Option key={floor.id} value={floor.id.toString()}>
+                    {floor.name}
+                  </Option>
+                ))}
+              </Select>
+              <Input
+                type="number"
+                label="Capacity"
+                value={formData.capacity}
+                onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
+                min="1"
+                placeholder="Number of people"
+              />
+              <Checkbox
+                id="isActive"
+                label="Is Active"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+              />
             </div>
-            <Select
-              label="Role"
-              value={formData.role}
-              onChange={(val) => setFormData({ ...formData, role: val })}
-            >
-              <Option value="USER">USER</Option>
-              <Option value="BUSINESS_OWNER">BUSINESS_OWNER</Option>
-              <Option value="ADMIN">ADMIN</Option>
-              <Option value="SUPER_ADMIN">SUPER_ADMIN</Option>
-            </Select>
           </DialogBody>
           <DialogFooter className="border-t border-gray-200 pt-4">
             <Button
@@ -779,7 +756,7 @@ export default function Users() {
               color="blue"
               variant="gradient"
             >
-              {editingUser ? 'Update User' : 'Create User'}
+              {editingPlace ? 'Update Place' : 'Create Place'}
             </Button>
           </DialogFooter>
         </form>
@@ -790,15 +767,19 @@ export default function Users() {
         open={openDeleteDialog} 
         handler={() => setOpenDeleteDialog(false)} 
         size="sm"
+        animate={{
+          mount: { scale: 1, y: 0 },
+          unmount: { scale: 0.9, y: -100 },
+        }}
       >
         <DialogHeader className="border-b border-gray-200 pb-4">
           <Typography variant="h5" color="red">
-            Delete User
+            Delete Place
           </Typography>
         </DialogHeader>
         <DialogBody divider>
           <Typography>
-            Are you sure you want to delete this user? This action cannot be undone.
+            Are you sure you want to delete this place? This action cannot be undone.
           </Typography>
         </DialogBody>
         <DialogFooter className="border-t border-gray-200 pt-4">
@@ -814,24 +795,28 @@ export default function Users() {
             color="red" 
             onClick={handleDelete}
           >
-            Delete User
+            Delete Place
           </Button>
         </DialogFooter>
       </Dialog>
 
-      {/* User Details Dialog */}
+      {/* Place Details Dialog */}
       <Dialog 
         open={openDetailsDialog} 
         handler={() => setOpenDetailsDialog(false)} 
         size="lg"
+        animate={{
+          mount: { scale: 1, y: 0 },
+          unmount: { scale: 0.9, y: -100 },
+        }}
       >
         <DialogHeader className="border-b border-gray-200 pb-4">
           <Typography variant="h4" color="blue-gray">
-            User Details
+            Place Details
           </Typography>
         </DialogHeader>
         <DialogBody divider className="max-h-[70vh] overflow-y-auto">
-          {selectedUser ? (
+          {selectedPlace ? (
             <div className="space-y-6">
               <div>
                 <Typography variant="h6" color="blue-gray" className="mb-3">
@@ -843,104 +828,96 @@ export default function Users() {
                       ID:
                     </Typography>
                     <Typography variant="small" color="blue-gray">
-                      {selectedUser.id}
+                      {selectedPlace.id}
                     </Typography>
                   </div>
                   <div className="flex justify-between">
                     <Typography variant="small" color="gray" className="font-semibold">
-                      Username:
+                      Name:
                     </Typography>
                     <Typography variant="small" color="blue-gray">
-                      {selectedUser.username || 'N/A'}
+                      {selectedPlace.name || 'N/A'}
                     </Typography>
                   </div>
                   <div className="flex justify-between">
                     <Typography variant="small" color="gray" className="font-semibold">
-                      Full Name:
+                      Capacity:
                     </Typography>
                     <Typography variant="small" color="blue-gray">
-                      {selectedUser.fullName || 'N/A'}
+                      {selectedPlace.capacity || 0}
                     </Typography>
-                  </div>
-                  <div className="flex justify-between">
-                    <Typography variant="small" color="gray" className="font-semibold">
-                      Role:
-                    </Typography>
-                    {getRoleBadge(selectedUser.role)}
                   </div>
                   <div className="flex justify-between">
                     <Typography variant="small" color="gray" className="font-semibold">
                       Status:
                     </Typography>
-                    {getStatusBadge(selectedUser)}
+                    <Typography variant="small" color="blue-gray">
+                      {selectedPlace.isActive ? 'Active' : 'Inactive'}
+                    </Typography>
                   </div>
                 </div>
               </div>
 
-              {(selectedUser.phoneNumber || selectedUser.email) && (
-                <div>
-                  <Typography variant="h6" color="blue-gray" className="mb-3">
-                    Contact Information
-                  </Typography>
-                  <div className="space-y-2">
-                    {selectedUser.phoneNumber && (
-                      <div className="flex justify-between">
-                        <Typography variant="small" color="gray" className="font-semibold">
-                          Phone Number:
-                        </Typography>
-                        <Typography variant="small" color="blue-gray">
-                          {selectedUser.phoneNumber}
-                        </Typography>
-                      </div>
-                    )}
-                    {selectedUser.email && (
-                      <div className="flex justify-between">
-                        <Typography variant="small" color="gray" className="font-semibold">
-                          Email:
-                        </Typography>
-                        <Typography variant="small" color="blue-gray">
-                          {selectedUser.email}
-                        </Typography>
-                      </div>
-                    )}
+              <div>
+                <Typography variant="h6" color="blue-gray" className="mb-3">
+                  Additional Details
+                </Typography>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <Typography variant="small" color="gray" className="font-semibold">
+                      Floor:
+                    </Typography>
+                    <Typography variant="small" color="blue-gray">
+                      {selectedPlace.floor?.name || (selectedPlace.floorId ? `ID: ${selectedPlace.floorId}` : 'N/A')}
+                    </Typography>
                   </div>
+                  {selectedPlace.company && (
+                    <div className="flex justify-between">
+                      <Typography variant="small" color="gray" className="font-semibold">
+                        Company:
+                      </Typography>
+                      <Typography variant="small" color="blue-gray">
+                        {selectedPlace.company.name}
+                      </Typography>
+                    </div>
+                  )}
+                  {selectedPlace.location && (
+                    <div className="flex justify-between">
+                      <Typography variant="small" color="gray" className="font-semibold">
+                        Location:
+                      </Typography>
+                      <Typography variant="small" color="blue-gray" className="text-right max-w-xs">
+                        {selectedPlace.location.address || JSON.stringify(selectedPlace.location)}
+                      </Typography>
+                    </div>
+                  )}
+                  {selectedPlace.createdAt && (
+                    <div className="flex justify-between">
+                      <Typography variant="small" color="gray" className="font-semibold">
+                        Created At:
+                      </Typography>
+                      <Typography variant="small" color="blue-gray">
+                        {new Date(selectedPlace.createdAt).toLocaleString()}
+                      </Typography>
+                    </div>
+                  )}
+                  {selectedPlace.updatedAt && (
+                    <div className="flex justify-between">
+                      <Typography variant="small" color="gray" className="font-semibold">
+                        Updated At:
+                      </Typography>
+                      <Typography variant="small" color="blue-gray">
+                        {new Date(selectedPlace.updatedAt).toLocaleString()}
+                      </Typography>
+                    </div>
+                  )}
                 </div>
-              )}
-
-              {(selectedUser.createdAt || selectedUser.updatedAt) && (
-                <div>
-                  <Typography variant="h6" color="blue-gray" className="mb-3">
-                    Timestamps
-                  </Typography>
-                  <div className="space-y-2">
-                    {selectedUser.createdAt && (
-                      <div className="flex justify-between">
-                        <Typography variant="small" color="gray" className="font-semibold">
-                          Created At:
-                        </Typography>
-                        <Typography variant="small" color="blue-gray">
-                          {new Date(selectedUser.createdAt).toLocaleString()}
-                        </Typography>
-                      </div>
-                    )}
-                    {selectedUser.updatedAt && (
-                      <div className="flex justify-between">
-                        <Typography variant="small" color="gray" className="font-semibold">
-                          Updated At:
-                        </Typography>
-                        <Typography variant="small" color="blue-gray">
-                          {new Date(selectedUser.updatedAt).toLocaleString()}
-                        </Typography>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
           ) : (
             <div className="text-center py-8">
               <Typography variant="small" color="gray">
-                No user selected
+                No place selected
               </Typography>
             </div>
           )}
