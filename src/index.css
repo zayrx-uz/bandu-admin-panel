@@ -3,15 +3,6 @@
 @tailwind utilities;
 
 :root {
-<<<<<<< Updated upstream
-    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  }
-  
-  * {
-    margin: 0;
-    padding: 0;
-  }
-=======
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   
   /* Default theme colors */
@@ -214,5 +205,4 @@
     max-height: 1000px;
   }
 }
->>>>>>> Stashed changes
   

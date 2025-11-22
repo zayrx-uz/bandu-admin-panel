@@ -1,27 +1,13 @@
 /** @type {import('tailwindcss').Config} */
 const withMT = require("@material-tailwind/react/utils/withMT");
 
-<<<<<<< Updated upstream:tailwind.config.js
-
-
-export default withMT({
- 
-=======
 module.exports = withMT({
->>>>>>> Stashed changes:tailwind.config.cjs
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   darkMode: 'class',
   theme: {
-<<<<<<< Updated upstream:tailwind.config.js
-    extend: {},
-  },
-  plugins: [],
-  
-});
-=======
     extend: {
       colors: {
         // Tailwind-style clean palette
@@ -58,5 +44,3 @@ module.exports = withMT({
   },
   plugins: [],
 });
-
->>>>>>> Stashed changes:tailwind.config.cjs

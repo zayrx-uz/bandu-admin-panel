@@ -60,11 +60,6 @@ export default function Sidebar({
   };
 
   const menuItems = [
-<<<<<<< Updated upstream
-    { path: "/", label: "Home", icon: "🏠" },
-    { path: "/company", label: "Company", icon: "🏢" },
-    { path: "/users", label: "Users", icon: "👥" },
-=======
     { 
       path: "/", 
       label: "Home", 
@@ -146,26 +141,19 @@ export default function Sidebar({
         </svg>
       )
     },
->>>>>>> Stashed changes
   ];
 
   return (
     <div
-<<<<<<< Updated upstream
-      className={`fixed left-0 top-0 h-screen bg-gray-800 dark:bg-gray-900 text-white transition-all duration-300 ${
-        isOpen ? "w-64" : "w-20"
-      } flex flex-col z-50 overflow-hidden`}>
-=======
       className={`fixed left-0 top-0 h-screen bg-white border-r border-gray-200 text-gray-950 transition-all duration-300 ${
         isOpen ? "max-w-[250px] w-[250px]" : "w-20"
       } flex flex-col z-50 overflow-hidden shadow-sm`}>
->>>>>>> Stashed changes
       {/* Logo/Brand */}
-      <div className={`p-4 border-b border-gray-700 flex items-center flex-shrink-0 ${isOpen ? 'justify-between' : 'justify-center'}`}>
+      <div className={`p-4 border-b border-gray-200 flex items-center flex-shrink-0 ${isOpen ? 'justify-between' : 'justify-center'}`}>
         {isOpen && (
           <Link
             to="/"
-            className="text-2xl font-medium leading-[1.3] transition-colors duration-300 text-white">
+            className="text-xl font-semibold leading-[1.3] transition-colors duration-300 text-gray-950 hover:text-gray-700">
             <img
               src={logo}
               alt="Bandu Logo"
@@ -176,11 +164,7 @@ export default function Sidebar({
         <IconButton
           variant="text"
           onClick={() => setIsOpen(!isOpen)}
-<<<<<<< Updated upstream
-          className="p-2 rounded-lg hover:bg-gray-700 transition-colors">
-=======
           className="rounded-lg">
->>>>>>> Stashed changes
           {isOpen ? (
             <svg
               className="w-5 h-5"
@@ -212,11 +196,7 @@ export default function Sidebar({
       </div>
 
       {/* Navigation Menu */}
-<<<<<<< Updated upstream
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-=======
       <nav className="flex-1 p-4 flex flex-col gap-1 overflow-y-auto">
->>>>>>> Stashed changes
         {menuItems.map((item) => (
           <NavLink
             key={item.path}
@@ -224,53 +204,18 @@ export default function Sidebar({
             className={({ isActive }) =>
               `flex items-center ${isOpen ? 'gap-3' : 'justify-center'} p-[9px] rounded-lg transition-colors ${
                 isActive
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                  ? "bg-gray-950 text-white font-medium"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-950"
               }`
             }>
-<<<<<<< Updated upstream
-            <span className="text-xl">{item.icon}</span>
-            {isOpen && <span>{item.label}</span>}
-=======
             <span className="flex-shrink-0">{item.icon}</span>
             {isOpen && <span className="text-sm whitespace-nowrap">{item.label}</span>}
->>>>>>> Stashed changes
           </NavLink>
         ))}
       </nav>
 
       {/* User Profile and Action Buttons Section */}
       {isAuthenticated && (
-<<<<<<< Updated upstream
-        <div className="p-4 border-t border-gray-700 flex-shrink-0">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="relative w-10 h-10 rounded-full border-2 border-gray-600 overflow-hidden bg-blue-500 flex items-center justify-center flex-shrink-0">
-              {hasValidProfilePicture ? (
-                <img
-                  src={user.profilePicture}
-                  alt={user?.fullName || "User"}
-                  className="w-full h-full object-cover"
-                  onError={() => setImageError(true)}
-                />
-              ) : (
-                <span className="text-white font-semibold text-sm">
-                  {(
-                    user?.fullName?.trim()?.charAt(0) ||
-                    user?.username?.trim()?.charAt(0) ||
-                    "U"
-                  ).toUpperCase()}
-                </span>
-              )}
-            </div>
-            {isOpen && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">
-                  {user?.fullName || user?.username || "User"}
-                </p>
-                <p className="text-xs text-gray-400 truncate">
-                  {user?.role || ""}
-                </p>
-=======
         <div className={`p-4 border-t border-gray-200 flex flex-col ${isOpen ? 'items-stretch' : 'items-center'} gap-2`}>
           {/* User Profile - Name and Logo */}
           <div
@@ -306,51 +251,10 @@ export default function Sidebar({
                 <span className="text-xs text-gray-500 whitespace-nowrap block truncate">
                   Role: {user?.role || "SUPER_ADMIN"}
                 </span>
->>>>>>> Stashed changes
               </div>
             )}
           </div>
 
-<<<<<<< Updated upstream
-          {isOpen && (
-            <div className="space-y-2">
-              <button
-                onClick={() => navigate("/profile")}
-                className="w-full flex items-center gap-3 p-2 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors text-sm">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-                Profile
-              </button>
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 p-2 rounded-lg text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors text-sm">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                  />
-                </svg>
-                Log Out
-              </button>
-            </div>
-          )}
-=======
           {/* Action Buttons */}
           <div className={`flex flex-col ${isOpen ? 'gap-1' : 'gap-2'}`}>
             {/* Settings button */}
@@ -405,7 +309,6 @@ export default function Sidebar({
               {isOpen && <span>Log Out</span>}
             </Button>
           </div>
->>>>>>> Stashed changes
         </div>
       )}
     </div>

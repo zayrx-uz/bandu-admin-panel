@@ -1,10 +1,6 @@
-<<<<<<< Updated upstream
-const API_BASE_URL = 'https://api.bandu.uz/api';
-=======
 // Always use full URL to send requests directly to API server
 // This ensures authentication tokens are sent correctly and avoids proxy issues
 export const API_BASE_URL = 'https://app.bandu.uz/api';
->>>>>>> Stashed changes
 
 // Helper function to get auth headers
 export const getAuthHeaders = () => {
@@ -414,8 +410,6 @@ export const updateCompany = async (id, companyData) => {
   }
 };
 
-<<<<<<< Updated upstream
-=======
 export const updateCompanyWithFiles = async (id, formData) => {
   try {
     const headers = getAuthHeadersForFormData();
@@ -705,7 +699,6 @@ export const deleteCompanyImage = async (companyId, imageId) => {
   }
 };
 
->>>>>>> Stashed changes
 export const deleteCompany = async (id) => {
   try {
     const response = await fetch(`${API_BASE_URL}/company/${id}`, {
@@ -972,8 +965,6 @@ export const deactivateUser = async (id) => {
   }
 };
 
-<<<<<<< Updated upstream
-=======
 export const blockUser = async (id) => {
   try {
     const response = await fetch(`${API_BASE_URL}/user/${id}/block`, {
@@ -2114,7 +2105,6 @@ export const deleteCoupon = async (id) => {
 
 // Note: Review endpoints can be added if needed for Super Admin
 
->>>>>>> Stashed changes
 // Health API function
 export const getHealth = async () => {
   try {
