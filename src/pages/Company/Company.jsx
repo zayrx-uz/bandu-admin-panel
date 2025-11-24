@@ -4,14 +4,14 @@ import { getCompanies, getCompanyById, createCompany, updateCompany, deleteCompa
 import { getCompanyCategories } from '../../services/api';
 import { API_BASE_URL } from '../../services/api';
 
-// Helper function to normalize logo URL to use api.bandu.uz
+// Helper function to normalize logo URL to use app.bandu.uz
 const getLogoUrl = (logo) => {
   if (!logo) return null;
   
   // If logo is already a full URL
   if (logo.startsWith('http://') || logo.startsWith('https://')) {
-    // Replace admin.bandu.uz with api.bandu.uz
-    return logo.replace(/https?:\/\/admin\.bandu\.uz/g, 'https://api.bandu.uz');
+    // Replace admin.bandu.uz with app.bandu.uz
+    return logo.replace(/https?:\/\/admin\.bandu\.uz/g, 'https://app.bandu.uz');
   }
   
   // If logo is a relative path, prepend API_BASE_URL
