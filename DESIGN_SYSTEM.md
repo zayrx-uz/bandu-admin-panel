@@ -73,7 +73,7 @@ All text colors meet WCAG AA contrast requirements:
 
 ## API Reference
 
-Company Categories API endpoints (from https://api.bandu.uz/api/docs#/Company%20Categories):
+Company Categories API endpoints (from https://app.bandu.uz/api/docs#/Company%20Categories):
 - `GET /api/company-category` - List all categories
 - `GET /api/company-category/:id` - Get category by ID
 - `POST /api/company-category` - Create category
